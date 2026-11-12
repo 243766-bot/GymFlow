@@ -1,6 +1,7 @@
 package com.gymflow.api.service;
 
 import com.gymflow.api.dto.AuthResponse;
+import com.gymflow.api.dto.FaceInfoResponse;
 import com.gymflow.api.dto.FaceLoginRequest;
 import com.gymflow.api.dto.FaceRegisterRequest;
 import com.gymflow.api.dto.UsuarioResponse;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 public class FaceAuthService {
 
     private static final int TAMANO_DESCRIPTOR = 128;
+    private static final String PREFIJO_FOTO = "data:image/jpeg;base64,";
+    private static final int MAX_CARACTERES_FOTO = 300_000;
 
     private final PlantillaFacialRepository plantillaRepository;
     private final UsuarioRepository usuarioRepository;
@@ -50,6 +54,18 @@ public class FaceAuthService {
         this.tokenExpirationMs = tokenExpirationMs;
     }
 
+    // ---------- Consulta del rostro registrado (administrador) ----------
+
+    @Transactional(readOnly = true)
+    public FaceInfoResponse consultar(Long usuarioId) {
+        if (!usuarioRepository.existsById(usuarioId)) {
+            throw new NotFoundException("Usuario no encontrado");
+        }
+        return plantillaRepository.findByUsuarioId(usuarioId)
+                .map(p -> new FaceInfoResponse(true, p.getFechaRegistro(), p.getFoto()))
+                .orElse(new FaceInfoResponse(false, null, null));
+    }
+
     // ---------- Registro del rostro (lo hace el administrador) ----------
 
     @Transactional
@@ -58,16 +74,18 @@ public class FaceAuthService {
             throw new BadRequestException("Se necesita el consentimiento del cliente para guardar su rostro");
         }
         validarValores(request.descriptor());
+        String foto = validarFoto(request.foto());
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
 
-        // Si ya tenía rostro registrado, se reemplaza
+        // Si ya tenía rostro registrado, se reemplaza (descriptor y foto)
         PlantillaFacial plantilla = plantillaRepository.findByUsuarioId(usuarioId)
                 .orElseGet(PlantillaFacial::new);
 
         plantilla.setUsuario(usuario);
         plantilla.setDescriptor(serializar(request.descriptor()));
+        plantilla.setFoto(foto);
         plantilla.setConsentimiento(true);
         plantilla.setFechaRegistro(LocalDateTime.now());
         plantillaRepository.save(plantilla);
@@ -78,6 +96,7 @@ public class FaceAuthService {
         if (!usuarioRepository.existsById(usuarioId)) {
             throw new NotFoundException("Usuario no encontrado");
         }
+        // Borra la plantilla completa: descriptor y foto
         plantillaRepository.deleteByUsuarioId(usuarioId);
     }
 
@@ -131,6 +150,29 @@ public class FaceAuthService {
                 throw new BadRequestException("El descriptor contiene valores no válidos");
             }
         }
+    }
+
+    // La foto es opcional; si viene, debe ser un JPEG pequeño y válido
+    private String validarFoto(String foto) {
+        if (foto == null || foto.isBlank()) {
+            return null;
+        }
+        if (!foto.startsWith(PREFIJO_FOTO) || foto.length() > MAX_CARACTERES_FOTO) {
+            throw new BadRequestException("La foto debe ser un JPEG pequeño");
+        }
+        try {
+            byte[] bytes = Base64.getDecoder().decode(foto.substring(PREFIJO_FOTO.length()));
+            boolean esJpeg = bytes.length > 3
+                    && (bytes[0] & 0xFF) == 0xFF
+                    && (bytes[1] & 0xFF) == 0xD8
+                    && (bytes[2] & 0xFF) == 0xFF;
+            if (!esJpeg) {
+                throw new BadRequestException("La foto no es un JPEG válido");
+            }
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("La foto no es un JPEG válido");
+        }
+        return foto;
     }
 
     private String serializar(List<Double> descriptor) {

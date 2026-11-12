@@ -1,6 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import * as faceapi from "@vladmandic/face-api";
 
+// Recorta el rostro (con un margen) y lo reduce a una miniatura JPEG pequeña
+function recortarRostro(video, caja) {
+  const margen = 0.4;
+  const x = Math.max(0, caja.x - caja.width * margen);
+  const y = Math.max(0, caja.y - caja.height * margen);
+  const ancho = Math.min(video.videoWidth - x, caja.width * (1 + margen * 2));
+  const alto = Math.min(video.videoHeight - y, caja.height * (1 + margen * 2));
+
+  const lado = 240;
+  const canvas = document.createElement("canvas");
+  canvas.width = lado;
+  canvas.height = Math.round(lado * (alto / ancho));
+  canvas.getContext("2d").drawImage(video, x, y, ancho, alto, 0, 0, canvas.width, canvas.height);
+
+  return canvas.toDataURL("image/jpeg", 0.8);
+}
+
 export default function FaceCamera({
   onDescriptor,
   onBeforeCapture,
@@ -88,9 +105,12 @@ export default function FaceCamera({
         return;
       }
 
-      // Entregamos el descriptor (128 números) a quien use este componente
+      // Miniatura del rostro (solo la usa quien la necesite, como el registro del admin)
+      const foto = recortarRostro(video, result.detection.box);
+
+      // Entregamos el descriptor (128 números), el contexto y la miniatura
       setStatus("Enviando...");
-      await onDescriptor(Array.from(result.descriptor), contexto);
+      await onDescriptor(Array.from(result.descriptor), contexto, foto);
       setStatus(mensajeExito);
     } catch (err) {
       console.error(err);

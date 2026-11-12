@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import FaceCamera from "../components/FaceCamera";
 import { api } from "../api";
+import { formatearFecha } from "../formato";
 
 export default function Caja() {
-  const [cliente, setCliente] = useState(null);
+  const [resultado, setResultado] = useState(null);
   const temporizador = useRef(null);
 
   useEffect(() => {
@@ -12,7 +13,7 @@ export default function Caja() {
 
   // 1. Antes de capturar: pedir un desafío de un solo uso
   async function pedirDesafio() {
-    setCliente(null);
+    setResultado(null);
     clearTimeout(temporizador.current);
     const respuesta = await api("/auth/face/challenge", { method: "POST" });
     return respuesta.challenge;
@@ -25,20 +26,31 @@ export default function Caja() {
       body: { challenge, descriptor },
     });
 
-    // En la caja no guardamos la sesión del cliente: solo mostramos quién es
-    setCliente(respuesta.usuario);
-    temporizador.current = setTimeout(() => setCliente(null), 8000);
+    // En la caja no guardamos la sesión del cliente: solo mostramos sus datos
+    setResultado({ usuario: respuesta.usuario, membresia: respuesta.membresia });
+    temporizador.current = setTimeout(() => setResultado(null), 10000);
   }
+
+  const membresia = resultado?.membresia;
+  const activa = membresia?.estado === "ACTIVA";
 
   return (
     <div className="contenedor">
       <h1>Caja · Acceso con rostro</h1>
 
-      {cliente && (
-        <div className="tarjeta ok">
-          <h2>¡Bienvenido, {cliente.nombre}!</h2>
-          <p>{cliente.email}</p>
-          <p>Membresía: próximamente</p>
+      {resultado && (
+        <div className={`tarjeta ${activa ? "ok" : "error"}`}>
+          <h2>¡Hola, {resultado.usuario.nombre}!</h2>
+          {membresia ? (
+            <>
+              <p><strong>Membresía:</strong> {membresia.estado}</p>
+              <p><strong>Plan:</strong> {membresia.plan.nombre}</p>
+              <p><strong>Vence:</strong> {formatearFecha(membresia.fechaVencimiento)}</p>
+              {activa && <p>Te quedan {membresia.diasRestantes} días.</p>}
+            </>
+          ) : (
+            <p>Aún no tienes una membresía. Pasa a recepción.</p>
+          )}
         </div>
       )}
 

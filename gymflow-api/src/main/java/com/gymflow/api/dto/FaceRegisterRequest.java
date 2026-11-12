@@ -11,6 +11,10 @@ public record FaceRegisterRequest(
         List<@NotNull Double> descriptor,
 
         @NotNull(message = "Debes indicar si el cliente dio su consentimiento")
-        Boolean consentimiento
+        Boolean consentimiento,
+
+        // Opcional: miniatura JPEG en formato "data:image/jpeg;base64,..."
+        @Size(max = 300000, message = "La foto es demasiado grande")
+        String foto
 ) {
 }

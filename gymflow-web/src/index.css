@@ -71,3 +71,93 @@ button:disabled {
 .ok {
   color: #2a9d4a;
 }
+
+.contenedor.ancho {
+  max-width: 1100px;
+}
+
+.tabla-scroll {
+  overflow-x: auto;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla th,
+.tabla td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #8884;
+  vertical-align: top;
+}
+
+.acciones {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.acciones button {
+  padding: 6px 10px;
+  font-size: 0.9rem;
+}
+
+.etiqueta {
+  font-size: 0.8rem;
+  border: 1px solid #8886;
+  border-radius: 6px;
+  padding: 1px 6px;
+  margin-left: 6px;
+}
+
+.encabezado {
+  flex-wrap: wrap;
+}
+
+.resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.resumen .tarjeta {
+  margin: 0;
+}
+
+.resumen .valor {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 4px 0 0;
+}
+
+.formulario.horizontal {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  max-width: none;
+}
+
+.dos-columnas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 800px) {
+  .dos-columnas {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tabla td.derecha,
+.tabla th.derecha {
+  text-align: right;
+}
+
+.pequeno {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}

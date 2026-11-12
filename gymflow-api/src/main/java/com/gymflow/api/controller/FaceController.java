@@ -1,5 +1,6 @@
 package com.gymflow.api.controller;
 
+import com.gymflow.api.dto.FaceInfoResponse;
 import com.gymflow.api.dto.FaceRegisterRequest;
 import com.gymflow.api.dto.MensajeResponse;
 import com.gymflow.api.service.FaceAuthService;
@@ -8,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +25,12 @@ public class FaceController {
 
     public FaceController(FaceAuthService faceAuthService) {
         this.faceAuthService = faceAuthService;
+    }
+
+    // Consulta si el cliente tiene rostro registrado y, si hay, su miniatura
+    @GetMapping
+    public FaceInfoResponse consultar(@PathVariable Long id) {
+        return faceAuthService.consultar(id);
     }
 
     @PostMapping

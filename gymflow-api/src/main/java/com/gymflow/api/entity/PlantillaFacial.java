@@ -16,9 +16,13 @@ public class PlantillaFacial {
     @JoinColumn(name = "usuario_id", unique = true)
     private Usuario usuario;
 
-    // Los 128 números del descriptor, separados por comas. NO se guarda la foto.
+    // Los 128 números del descriptor, separados por comas
     @Column(nullable = false, columnDefinition = "text")
     private String descriptor;
+
+    // Miniatura del rostro (JPEG en base64). Es opcional: los registros anteriores no la tienen.
+    @Column(columnDefinition = "text")
+    private String foto;
 
     @Column(nullable = false)
     private LocalDateTime fechaRegistro = LocalDateTime.now();
@@ -37,6 +41,9 @@ public class PlantillaFacial {
 
     public String getDescriptor() { return descriptor; }
     public void setDescriptor(String descriptor) { this.descriptor = descriptor; }
+
+    public String getFoto() { return foto; }
+    public void setFoto(String foto) { this.foto = foto; }
 
     public LocalDateTime getFechaRegistro() { return fechaRegistro; }
     public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }

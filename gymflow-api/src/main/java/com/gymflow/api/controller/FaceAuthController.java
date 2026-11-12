@@ -3,8 +3,11 @@ package com.gymflow.api.controller;
 import com.gymflow.api.dto.AuthResponse;
 import com.gymflow.api.dto.FaceChallengeResponse;
 import com.gymflow.api.dto.FaceLoginRequest;
+import com.gymflow.api.dto.FaceLoginResponse;
+import com.gymflow.api.dto.MembresiaResponse;
 import com.gymflow.api.service.FaceAuthService;
 import com.gymflow.api.service.FaceChallengeService;
+import com.gymflow.api.service.MembresiaService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +22,14 @@ public class FaceAuthController {
 
     private final FaceChallengeService challengeService;
     private final FaceAuthService faceAuthService;
+    private final MembresiaService membresiaService;
 
-    public FaceAuthController(FaceChallengeService challengeService, FaceAuthService faceAuthService) {
+    public FaceAuthController(FaceChallengeService challengeService,
+                              FaceAuthService faceAuthService,
+                              MembresiaService membresiaService) {
         this.challengeService = challengeService;
         this.faceAuthService = faceAuthService;
+        this.membresiaService = membresiaService;
     }
 
     @PostMapping("/challenge")
@@ -32,9 +39,17 @@ public class FaceAuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody FaceLoginRequest request,
-                                              HttpServletRequest http) {
+    public ResponseEntity<FaceLoginResponse> login(@Valid @RequestBody FaceLoginRequest request,
+                                                   HttpServletRequest http) {
         // El dispositivo se identifica por su IP
-        return ResponseEntity.ok(faceAuthService.login(request, http.getRemoteAddr()));
+        AuthResponse auth = faceAuthService.login(request, http.getRemoteAddr());
+
+        // Para la pantalla de la caja: estado, vencimiento y plan de la membresía
+        MembresiaResponse membresia = membresiaService
+                .actualDeUsuario(auth.usuario().id())
+                .orElse(null);
+
+        return ResponseEntity.ok(
+                new FaceLoginResponse(auth.token(), auth.tipo(), auth.usuario(), membresia));
     }
 }
