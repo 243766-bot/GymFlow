@@ -3,6 +3,7 @@ import { useAuth } from "./AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Perfil from "./pages/Perfil";
+import PagoResultado from "./pages/PagoResultado";
 import Caja from "./pages/Caja";
 import Admin from "./pages/Admin";
 import Planes from "./pages/Planes";
@@ -63,6 +64,8 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        {/* A esta pantalla regresa Mercado Pago después de pagar; ella misma pide iniciar sesión si hace falta */}
+        <Route path="/pago/resultado" element={<PagoResultado />} />
         <Route
           path="/admin"
           element={

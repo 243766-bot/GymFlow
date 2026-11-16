@@ -18,10 +18,15 @@ public class Pago {
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
-    // La membresía que se pagó (opcional)
+    // La membresía que se pagó (se llena cuando el pago se aprueba)
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "membresia_id")
     private Membresia membresia;
+
+    // El plan que se está pagando (en los pagos en línea es lo que se activa al aprobarse)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "plan_id")
+    private Plan plan;
 
     // Se guarda al momento de pagar, para que no cambie si después cambia el plan
     @Column(nullable = false, length = 150)
@@ -56,6 +61,9 @@ public class Pago {
 
     public Membresia getMembresia() { return membresia; }
     public void setMembresia(Membresia membresia) { this.membresia = membresia; }
+
+    public Plan getPlan() { return plan; }
+    public void setPlan(Plan plan) { this.plan = plan; }
 
     public String getConcepto() { return concepto; }
     public void setConcepto(String concepto) { this.concepto = concepto; }

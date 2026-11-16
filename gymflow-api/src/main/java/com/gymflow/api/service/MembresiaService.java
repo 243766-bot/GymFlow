@@ -127,27 +127,13 @@ public class MembresiaService {
     @Transactional
     public MembresiaResponse renovar(Long id, RenovarRequest request) {
         Membresia membresia = buscar(id);
-        LocalDate hoy = Fechas.hoy();
 
         // Si se manda un plan, la renovación cambia a ese plan
         if (request != null && request.planId() != null) {
             membresia.setPlan(buscarPlan(request.planId()));
         }
 
-        int dias = membresia.getPlan().getDuracionDias();
-        boolean vigente = membresia.getEstado() == EstadoMembresia.ACTIVA
-                && !membresia.getFechaVencimiento().isBefore(hoy);
-
-        if (vigente) {
-            // Aún vigente: los días nuevos se suman al vencimiento actual
-            membresia.setFechaVencimiento(membresia.getFechaVencimiento().plusDays(dias));
-        } else {
-            // Vencida o cancelada: empieza de nuevo desde hoy
-            membresia.setFechaInicio(hoy);
-            membresia.setFechaVencimiento(hoy.plusDays(dias));
-            membresia.setEstado(EstadoMembresia.ACTIVA);
-        }
-
+        extenderOReiniciar(membresia, Fechas.hoy());
         Membresia guardada = membresiaRepository.save(membresia);
 
         // Si se pidió, se registra el cobro en efectivo por el precio del plan elegido
@@ -158,7 +144,49 @@ public class MembresiaService {
         return MembresiaResponse.from(guardada);
     }
 
+    // ---------- Pago en línea aprobado ----------
+
+    // Activa o renueva la membresía de un cliente que ya pagó un plan.
+    // Si nunca tuvo una, la crea; si ya tenía, la renueva con el plan pagado.
+    @Transactional
+    public Membresia aplicarPlanPagado(Usuario usuario, Plan plan) {
+        LocalDate hoy = Fechas.hoy();
+
+        Optional<Membresia> ultima = membresiaRepository
+                .findFirstByUsuarioIdOrderByFechaVencimientoDesc(usuario.getId());
+
+        if (ultima.isEmpty()) {
+            Membresia nueva = new Membresia();
+            nueva.setUsuario(usuario);
+            nueva.setPlan(plan);
+            nueva.setFechaInicio(hoy);
+            nueva.setFechaVencimiento(hoy.plusDays(plan.getDuracionDias()));
+            nueva.setEstado(EstadoMembresia.ACTIVA);
+            return membresiaRepository.save(nueva);
+        }
+
+        Membresia membresia = ultima.get();
+        membresia.setPlan(plan);
+        extenderOReiniciar(membresia, hoy);
+        return membresiaRepository.save(membresia);
+    }
+
     // ---------- Utilidades ----------
+
+    // Si sigue vigente, suma los días al vencimiento; si venció o se canceló, empieza de nuevo desde hoy
+    private void extenderOReiniciar(Membresia membresia, LocalDate hoy) {
+        int dias = membresia.getPlan().getDuracionDias();
+        boolean vigente = membresia.getEstado() == EstadoMembresia.ACTIVA
+                && !membresia.getFechaVencimiento().isBefore(hoy);
+
+        if (vigente) {
+            membresia.setFechaVencimiento(membresia.getFechaVencimiento().plusDays(dias));
+        } else {
+            membresia.setFechaInicio(hoy);
+            membresia.setFechaVencimiento(hoy.plusDays(dias));
+            membresia.setEstado(EstadoMembresia.ACTIVA);
+        }
+    }
 
     private Membresia buscar(Long id) {
         return membresiaRepository.findById(id)

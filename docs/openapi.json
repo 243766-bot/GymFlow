@@ -683,6 +683,36 @@
         }
       }
     },
+    "/api/v1/payments/checkout": {
+      "post": {
+        "tags": [
+          "Pagos"
+        ],
+        "operationId": "checkout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/memberships": {
       "get": {
         "tags": [
@@ -1014,6 +1044,37 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/VentaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payments/{id}/status": {
+      "get": {
+        "tags": [
+          "Pagos"
+        ],
+        "operationId": "estado",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagoEstadoResponse"
                 }
               }
             }
@@ -1493,6 +1554,33 @@
           }
         }
       },
+      "CheckoutRequest": {
+        "type": "object",
+        "properties": {
+          "planId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "planId"
+        ]
+      },
+      "CheckoutResponse": {
+        "type": "object",
+        "properties": {
+          "pagoId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "preferenciaId": {
+            "type": "string"
+          },
+          "urlPago": {
+            "type": "string"
+          }
+        }
+      },
       "MembresiaRequest": {
         "type": "object",
         "properties": {
@@ -1734,6 +1822,17 @@
           },
           "foto": {
             "type": "string"
+          }
+        }
+      },
+      "PagoEstadoResponse": {
+        "type": "object",
+        "properties": {
+          "pago": {
+            "$ref": "#/components/schemas/PagoResponse"
+          },
+          "membresia": {
+            "$ref": "#/components/schemas/MembresiaResponse"
           }
         }
       },

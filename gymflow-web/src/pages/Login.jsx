@@ -1,18 +1,25 @@
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../AuthContext";
 
 export default function Login() {
   const { usuario, iniciarSesion } = useAuth();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  // Si ya hay sesión, mandamos a cada rol a su pantalla
+  // Si ya hay sesión: regresa a la pantalla de donde venía (si venía de alguna) o a la de su rol
   if (usuario) {
-    return <Navigate to={usuario.rol === "ROLE_ADMIN" ? "/admin" : "/perfil"} replace />;
+    const origen = location.state?.from;
+    const destino = origen
+      ? `${origen.pathname}${origen.search}`
+      : usuario.rol === "ROLE_ADMIN"
+        ? "/admin"
+        : "/perfil";
+    return <Navigate to={destino} replace />;
   }
 
   async function enviar(e) {

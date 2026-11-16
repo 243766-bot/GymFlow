@@ -99,6 +99,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Envía el cuerpo como application/json");
     }
 
+    // 502: un servicio externo (Mercado Pago) falló o no está configurado
+    @ExceptionHandler(ExternalServiceException.class)
+    public ResponseEntity<ApiError> servicioExterno(ExternalServiceException ex) {
+        return build(HttpStatus.BAD_GATEWAY, ex.getMessage());
+    }
+
     // 500: cualquier error inesperado (no mostramos detalles internos al cliente)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> inesperado(Exception ex) {
