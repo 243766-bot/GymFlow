@@ -1,0 +1,57 @@
+$kind: http-request
+description: Extiende la vigencia de la membresía con el mismo plan u otro nuevo, y permite registrar el cobro en efectivo. El cuerpo JSON es opcional. Solo ADMIN.
+url: "{{baseUrl}}/api/v1/memberships/:id/renew"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+pathVariables:
+  - key: id
+    value: "1"
+    disabled: false
+    description: ID de la membresía
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+body:
+  type: json
+  content: |-
+    {
+      "planId": 1,
+      "cobrarEnEfectivo": true
+    }
+  $type: |-
+    {
+      "description": "Parámetros opcionales para renovar una membresía",
+      "type": "object",
+      "properties": {
+        "planId": {
+          "type": "integer",
+          "example": 1,
+          "description": "ID del plan para la renovación (si se omite conserva el actual)",
+          "format": "int64"
+        },
+        "cobrarEnEfectivo": {
+          "type": "boolean",
+          "example": true,
+          "description": "true para registrar el cobro en efectivo en caja"
+        }
+      }
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Renovar una membresía.resources/examples
+order: 1000

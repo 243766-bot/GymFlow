@@ -1,0 +1,249 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/v1/auth/face/login"
+  method: POST
+  headers:
+    - key: Content-Type
+      value: application/json
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  body:
+    type: json
+    content: |-
+      {
+        "challenge": "f8a9c2e1-4b7d-4e9a-9c3b-1a2b3c4d5e6f",
+        "descriptor": [
+          5319.375619224425,
+          8219.433937299465,
+          2276.7802690158633,
+          4089.478956486662,
+          2364.3433497575916,
+          9697.573955651365,
+          4541.085968491845,
+          1355.2376884073335,
+          938.4405904040483,
+          9489.550990260805,
+          9328.688018114059,
+          177.76060693432072,
+          9379.091655075914,
+          5242.252664066193,
+          5654.302644362651,
+          6885.474005206818,
+          3226.9506621731703,
+          9942.14576076353,
+          2987.5858355289274,
+          3366.02363975022
+        ]
+      }
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "tipo": "Bearer",
+        "token": "eyJhbGciOiJIUzI1NiJ9...",
+        "usuario": {
+          "activo": true,
+          "email": "carlos@gymflow.com",
+          "fechaRegistro": "2026-11-01T09:00:00",
+          "id": 2,
+          "nombre": "Carlos Mendoza",
+          "rol": "ROLE_USER",
+          "telefono": "9671234567"
+        },
+        "membresia": {
+          "diasRestantes": 11,
+          "estado": "ACTIVA",
+          "fechaInicio": "2026-11-01",
+          "fechaVencimiento": "2026-12-01",
+          "id": 5,
+          "plan": {
+            "duracionDias": 30,
+            "id": 1,
+            "nombre": "Mensualidad Estándar",
+            "precio": 450
+          },
+          "usuarioId": 2,
+          "usuarioNombre": "Carlos Mendoza"
+        }
+      }
+    $type: |-
+      {
+        "description": "Respuesta de acceso por reconocimiento facial en recepción/caja",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiJ9...",
+            "description": "Token de acceso JWT"
+          },
+          "tipo": {
+            "type": "string",
+            "example": "Bearer",
+            "description": "Esquema del token"
+          },
+          "usuario": {
+            "type": "object",
+            "description": "Información pública del perfil de usuario (excluye contraseña)",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 2,
+                "description": "ID único del usuario",
+                "format": "int64"
+              },
+              "nombre": {
+                "type": "string",
+                "example": "Carlos Mendoza",
+                "description": "Nombre completo"
+              },
+              "email": {
+                "type": "string",
+                "example": "carlos@gymflow.com",
+                "description": "Correo electrónico"
+              },
+              "telefono": {
+                "type": "string",
+                "example": "9671234567",
+                "description": "Teléfono a 10 dígitos"
+              },
+              "rol": {
+                "type": "string",
+                "enum": [
+                  "ROLE_USER",
+                  "ROLE_ADMIN"
+                ],
+                "example": "ROLE_USER",
+                "description": "Rol del usuario en el sistema"
+              },
+              "activo": {
+                "type": "boolean",
+                "example": true,
+                "description": "Indica si la cuenta está activa (false = baneado)"
+              },
+              "fechaRegistro": {
+                "type": "string",
+                "example": "2026-11-01T09:00:00",
+                "description": "Fecha y hora de creación de la cuenta",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "activo",
+              "email",
+              "fechaRegistro",
+              "id",
+              "nombre",
+              "rol"
+            ]
+          },
+          "membresia": {
+            "type": "object",
+            "description": "Detalle de membresía con estado calculado en tiempo real y días restantes",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 5,
+                "description": "ID único de la membresía",
+                "format": "int64"
+              },
+              "usuarioId": {
+                "type": "integer",
+                "example": 2,
+                "description": "ID del cliente titular",
+                "format": "int64"
+              },
+              "usuarioNombre": {
+                "type": "string",
+                "example": "Carlos Mendoza",
+                "description": "Nombre del cliente titular"
+              },
+              "plan": {
+                "type": "object",
+                "description": "Información de un plan de membresía",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "example": 1,
+                    "description": "ID único del plan",
+                    "format": "int64"
+                  },
+                  "nombre": {
+                    "type": "string",
+                    "example": "Mensualidad Estándar",
+                    "description": "Nombre del plan"
+                  },
+                  "duracionDias": {
+                    "type": "integer",
+                    "example": 30,
+                    "description": "Duración en días",
+                    "format": "int32"
+                  },
+                  "precio": {
+                    "type": "number",
+                    "example": 450,
+                    "description": "Precio en MXN"
+                  }
+                },
+                "required": [
+                  "duracionDias",
+                  "id",
+                  "nombre",
+                  "precio"
+                ]
+              },
+              "fechaInicio": {
+                "type": "string",
+                "example": "2026-11-01",
+                "description": "Fecha de inicio de vigencia",
+                "format": "date"
+              },
+              "fechaVencimiento": {
+                "type": "string",
+                "example": "2026-12-01",
+                "description": "Fecha de vencimiento",
+                "format": "date"
+              },
+              "estado": {
+                "type": "string",
+                "enum": [
+                  "ACTIVA",
+                  "VENCIDA",
+                  "CANCELADA"
+                ],
+                "example": "ACTIVA",
+                "description": "Estado calculado de la membresía"
+              },
+              "diasRestantes": {
+                "type": "integer",
+                "example": 11,
+                "description": "Días restantes de vigencia (0 si está vencida o cancelada)",
+                "format": "int64"
+              }
+            },
+            "required": [
+              "diasRestantes",
+              "estado",
+              "fechaInicio",
+              "fechaVencimiento",
+              "id",
+              "plan",
+              "usuarioId",
+              "usuarioNombre"
+            ]
+          }
+        },
+        "required": [
+          "tipo",
+          "token",
+          "usuario"
+        ]
+      }
+order: 1000

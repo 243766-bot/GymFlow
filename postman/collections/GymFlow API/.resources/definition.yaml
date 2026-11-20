@@ -1,0 +1,12 @@
+$kind: collection
+description: API REST para administrar clientes, membresías, inventario, ventas y caja de un gimnasio, con inicio de sesión por correo y por reconocimiento facial.
+variables:
+  - key: baseUrl
+    value: http://localhost:8080
+    disabled: true
+auth:
+  - id: 7c0d7f87-49c0-4dcb-9bd0-7ce5eb74863d
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"

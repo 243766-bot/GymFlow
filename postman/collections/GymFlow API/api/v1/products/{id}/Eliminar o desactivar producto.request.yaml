@@ -1,0 +1,34 @@
+$kind: http-request
+description: Elimina el producto si no tiene ventas registradas, o lo marca como inactivo para conservar historial. Solo ADMIN.
+url: "{{baseUrl}}/api/v1/products/:id"
+method: DELETE
+headers:
+  Accept: application/json
+pathVariables:
+  - key: id
+    value: "1"
+    disabled: false
+    description: ID del producto
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+body:
+  type: text
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Eliminar o desactivar producto.resources/examples
+order: 3000

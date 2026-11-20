@@ -1,0 +1,31 @@
+$kind: http-request
+description: Devuelve todas las membresías registradas, con filtro opcional por ID de cliente. Solo ADMIN.
+url: "{{baseUrl}}/api/v1/memberships?usuarioId=3"
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: usuarioId
+    value: "3"
+    disabled: false
+    description: Filtrar membresías por ID del cliente
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+body:
+  type: text
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Listar membresías.resources/examples
+order: 2000

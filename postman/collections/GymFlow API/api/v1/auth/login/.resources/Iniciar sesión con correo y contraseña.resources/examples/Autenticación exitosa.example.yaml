@@ -1,0 +1,118 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/v1/auth/login"
+  method: POST
+  headers:
+    - key: Content-Type
+      value: application/json
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  body:
+    type: json
+    content: |-
+      {
+        "email": "admin@gymflow.com",
+        "password": "Admin12345"
+      }
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "tipo": "Bearer",
+        "token": "eyJhbGciOiJIUzI1NiJ9...",
+        "usuario": {
+          "activo": true,
+          "email": "carlos@gymflow.com",
+          "fechaRegistro": "2026-11-01T09:00:00",
+          "id": 2,
+          "nombre": "Carlos Mendoza",
+          "rol": "ROLE_USER",
+          "telefono": "9671234567"
+        }
+      }
+    $type: |-
+      {
+        "description": "Respuesta de autenticación exitosa con token JWT y datos del usuario",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiJ9...",
+            "description": "Token de acceso JWT"
+          },
+          "tipo": {
+            "type": "string",
+            "example": "Bearer",
+            "description": "Esquema del token"
+          },
+          "usuario": {
+            "type": "object",
+            "description": "Información pública del perfil de usuario (excluye contraseña)",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 2,
+                "description": "ID único del usuario",
+                "format": "int64"
+              },
+              "nombre": {
+                "type": "string",
+                "example": "Carlos Mendoza",
+                "description": "Nombre completo"
+              },
+              "email": {
+                "type": "string",
+                "example": "carlos@gymflow.com",
+                "description": "Correo electrónico"
+              },
+              "telefono": {
+                "type": "string",
+                "example": "9671234567",
+                "description": "Teléfono a 10 dígitos"
+              },
+              "rol": {
+                "type": "string",
+                "enum": [
+                  "ROLE_USER",
+                  "ROLE_ADMIN"
+                ],
+                "example": "ROLE_USER",
+                "description": "Rol del usuario en el sistema"
+              },
+              "activo": {
+                "type": "boolean",
+                "example": true,
+                "description": "Indica si la cuenta está activa (false = baneado)"
+              },
+              "fechaRegistro": {
+                "type": "string",
+                "example": "2026-11-01T09:00:00",
+                "description": "Fecha y hora de creación de la cuenta",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "activo",
+              "email",
+              "fechaRegistro",
+              "id",
+              "nombre",
+              "rol"
+            ]
+          }
+        },
+        "required": [
+          "tipo",
+          "token",
+          "usuario"
+        ]
+      }
+order: 1000

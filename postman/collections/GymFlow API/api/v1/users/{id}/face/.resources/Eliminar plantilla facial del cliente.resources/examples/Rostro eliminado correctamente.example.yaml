@@ -1,0 +1,45 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/v1/users/:id/face"
+  method: DELETE
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: id
+      value: "2"
+      disabled: false
+      description: ID del usuario
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "mensaje": "Operación realizada correctamente"
+      }
+    $type: |-
+      {
+        "description": "Respuesta estándar de confirmación de operación",
+        "type": "object",
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "example": "Operación realizada correctamente",
+            "description": "Mensaje descriptivo del resultado"
+          }
+        },
+        "required": [
+          "mensaje"
+        ]
+      }
+order: 1000

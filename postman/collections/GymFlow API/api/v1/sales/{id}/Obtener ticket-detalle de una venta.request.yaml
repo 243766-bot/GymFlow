@@ -1,0 +1,35 @@
+$kind: http-request
+name: Obtener ticket/detalle de una venta
+description: Consulta el desglose completo de artículos vendidos por ID de venta. Solo ADMIN.
+url: "{{baseUrl}}/api/v1/sales/:id"
+method: GET
+headers:
+  Accept: application/json
+pathVariables:
+  - key: id
+    value: "1"
+    disabled: false
+    description: ID de la venta
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+body:
+  type: text
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Obtener ticket-detalle de una venta.resources/examples
+order: 1000

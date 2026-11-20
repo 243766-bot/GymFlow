@@ -1,0 +1,124 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/v1/payments/me"
+  method: GET
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      [
+        {
+          "concepto": "Membresía: Mensualidad Estándar",
+          "estado": "APROBADO",
+          "fecha": "2026-11-20T12:40:00",
+          "id": 14,
+          "metodo": "MERCADO_PAGO",
+          "monto": 450,
+          "usuarioId": 2,
+          "usuarioNombre": "Carlos Mendoza",
+          "membresiaId": 5
+        },
+        {
+          "concepto": "Membresía: Mensualidad Estándar",
+          "estado": "APROBADO",
+          "fecha": "2026-11-20T12:40:00",
+          "id": 14,
+          "metodo": "MERCADO_PAGO",
+          "monto": 450,
+          "usuarioId": 2,
+          "usuarioNombre": "Carlos Mendoza",
+          "membresiaId": 5
+        }
+      ]
+    $type: |-
+      {
+        "type": "array",
+        "items": {
+          "description": "Registro de pago de membresía",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 14,
+              "description": "ID único del pago",
+              "format": "int64"
+            },
+            "usuarioId": {
+              "type": "integer",
+              "example": 2,
+              "description": "ID del cliente que realizó el pago",
+              "format": "int64"
+            },
+            "usuarioNombre": {
+              "type": "string",
+              "example": "Carlos Mendoza",
+              "description": "Nombre del cliente"
+            },
+            "membresiaId": {
+              "type": "integer",
+              "example": 5,
+              "description": "ID de la membresía asociada (null si el pago sigue pendiente)",
+              "format": "int64"
+            },
+            "concepto": {
+              "type": "string",
+              "example": "Membresía: Mensualidad Estándar",
+              "description": "Concepto cobrado"
+            },
+            "monto": {
+              "type": "number",
+              "example": 450,
+              "description": "Monto cobrado en MXN"
+            },
+            "metodo": {
+              "type": "string",
+              "enum": [
+                "EFECTIVO",
+                "MERCADO_PAGO"
+              ],
+              "example": "MERCADO_PAGO",
+              "description": "Método de pago utilizado"
+            },
+            "estado": {
+              "type": "string",
+              "enum": [
+                "APROBADO",
+                "PENDIENTE",
+                "RECHAZADO"
+              ],
+              "example": "APROBADO",
+              "description": "Estado del pago"
+            },
+            "fecha": {
+              "type": "string",
+              "example": "2026-11-20T12:40:00",
+              "description": "Fecha y hora del pago",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "concepto",
+            "estado",
+            "fecha",
+            "id",
+            "metodo",
+            "monto",
+            "usuarioId",
+            "usuarioNombre"
+          ]
+        }
+      }
+order: 1000

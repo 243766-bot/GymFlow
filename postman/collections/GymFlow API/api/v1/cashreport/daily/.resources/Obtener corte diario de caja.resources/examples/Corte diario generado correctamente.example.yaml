@@ -1,0 +1,325 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/v1/cashreport/daily?date=2026-11-20"
+  method: GET
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  queryParams:
+    - key: date
+      value: 2026-11-20
+      disabled: false
+      description: Fecha del corte en formato YYYY-MM-DD (opcional, por defecto hoy)
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "balance": 1790,
+        "fecha": "2026-11-20",
+        "ingresosMembresiasEfectivo": 900,
+        "ingresosMembresiasEnLinea": 450,
+        "numeroVentas": 4,
+        "pagos": [
+          {
+            "concepto": "Membresía: Mensualidad Estándar",
+            "estado": "APROBADO",
+            "fecha": "2026-11-20T12:40:00",
+            "id": 14,
+            "metodo": "MERCADO_PAGO",
+            "monto": 450,
+            "usuarioId": 2,
+            "usuarioNombre": "Carlos Mendoza",
+            "membresiaId": 5
+          },
+          {
+            "concepto": "Membresía: Mensualidad Estándar",
+            "estado": "APROBADO",
+            "fecha": "2026-11-20T12:40:00",
+            "id": 14,
+            "metodo": "MERCADO_PAGO",
+            "monto": 450,
+            "usuarioId": 2,
+            "usuarioNombre": "Carlos Mendoza",
+            "membresiaId": 5
+          }
+        ],
+        "salidas": [
+          {
+            "concepto": "Compra de garrafones de agua",
+            "fecha": "2026-11-20T10:15:00",
+            "id": 3,
+            "monto": 180,
+            "tipo": "SALIDA"
+          },
+          {
+            "concepto": "Compra de garrafones de agua",
+            "fecha": "2026-11-20T10:15:00",
+            "id": 3,
+            "monto": 180,
+            "tipo": "SALIDA"
+          }
+        ],
+        "totalSalidas": 180,
+        "totalVentas": 620,
+        "ventas": [
+          {
+            "articulos": 2,
+            "atendidoPor": "Administrador GymFlow",
+            "fecha": "2026-11-20T11:20:00",
+            "id": 7,
+            "total": 30,
+            "clienteNombre": "Carlos Mendoza"
+          },
+          {
+            "articulos": 2,
+            "atendidoPor": "Administrador GymFlow",
+            "fecha": "2026-11-20T11:20:00",
+            "id": 7,
+            "total": 30,
+            "clienteNombre": "Carlos Mendoza"
+          }
+        ]
+      }
+    $type: |-
+      {
+        "description": "Reporte financiero consolidado del corte diario de caja",
+        "type": "object",
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "example": "2026-11-20",
+            "description": "Fecha consultada del corte",
+            "format": "date"
+          },
+          "numeroVentas": {
+            "type": "integer",
+            "example": 4,
+            "description": "Total de tickets de venta emitidos en el día",
+            "format": "int32"
+          },
+          "totalVentas": {
+            "type": "number",
+            "example": 620,
+            "description": "Suma de ingresos por ventas de productos"
+          },
+          "ingresosMembresiasEfectivo": {
+            "type": "number",
+            "example": 900,
+            "description": "Ingresos por membresías cobradas en efectivo"
+          },
+          "ingresosMembresiasEnLinea": {
+            "type": "number",
+            "example": 450,
+            "description": "Ingresos por membresías aprobadas vía Mercado Pago"
+          },
+          "totalSalidas": {
+            "type": "number",
+            "example": 180,
+            "description": "Total de egresos/salidas registradas en caja"
+          },
+          "balance": {
+            "type": "number",
+            "example": 1790,
+            "description": "Balance neto del día (ventas + membresías - salidas)"
+          },
+          "ventas": {
+            "type": "array",
+            "description": "Listado resumido de ventas del día",
+            "items": {
+              "description": "Resumen ejecutivo de una venta dentro del corte diario de caja",
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "example": 7,
+                  "description": "ID de la venta",
+                  "format": "int64"
+                },
+                "fecha": {
+                  "type": "string",
+                  "example": "2026-11-20T11:20:00",
+                  "description": "Fecha y hora de la venta",
+                  "format": "date-time"
+                },
+                "total": {
+                  "type": "number",
+                  "example": 30,
+                  "description": "Total cobrado en MXN"
+                },
+                "atendidoPor": {
+                  "type": "string",
+                  "example": "Administrador GymFlow",
+                  "description": "Administrador que atendió"
+                },
+                "clienteNombre": {
+                  "type": "string",
+                  "example": "Carlos Mendoza",
+                  "description": "Nombre del cliente"
+                },
+                "articulos": {
+                  "type": "integer",
+                  "example": 2,
+                  "description": "Cantidad total de artículos vendidos",
+                  "format": "int32"
+                }
+              },
+              "required": [
+                "articulos",
+                "atendidoPor",
+                "fecha",
+                "id",
+                "total"
+              ]
+            }
+          },
+          "pagos": {
+            "type": "array",
+            "description": "Listado de pagos de membresía aprobados en el día",
+            "items": {
+              "description": "Registro de pago de membresía",
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "example": 14,
+                  "description": "ID único del pago",
+                  "format": "int64"
+                },
+                "usuarioId": {
+                  "type": "integer",
+                  "example": 2,
+                  "description": "ID del cliente que realizó el pago",
+                  "format": "int64"
+                },
+                "usuarioNombre": {
+                  "type": "string",
+                  "example": "Carlos Mendoza",
+                  "description": "Nombre del cliente"
+                },
+                "membresiaId": {
+                  "type": "integer",
+                  "example": 5,
+                  "description": "ID de la membresía asociada (null si el pago sigue pendiente)",
+                  "format": "int64"
+                },
+                "concepto": {
+                  "type": "string",
+                  "example": "Membresía: Mensualidad Estándar",
+                  "description": "Concepto cobrado"
+                },
+                "monto": {
+                  "type": "number",
+                  "example": 450,
+                  "description": "Monto cobrado en MXN"
+                },
+                "metodo": {
+                  "type": "string",
+                  "enum": [
+                    "EFECTIVO",
+                    "MERCADO_PAGO"
+                  ],
+                  "example": "MERCADO_PAGO",
+                  "description": "Método de pago utilizado"
+                },
+                "estado": {
+                  "type": "string",
+                  "enum": [
+                    "APROBADO",
+                    "PENDIENTE",
+                    "RECHAZADO"
+                  ],
+                  "example": "APROBADO",
+                  "description": "Estado del pago"
+                },
+                "fecha": {
+                  "type": "string",
+                  "example": "2026-11-20T12:40:00",
+                  "description": "Fecha y hora del pago",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "concepto",
+                "estado",
+                "fecha",
+                "id",
+                "metodo",
+                "monto",
+                "usuarioId",
+                "usuarioNombre"
+              ]
+            }
+          },
+          "salidas": {
+            "type": "array",
+            "description": "Listado de salidas de efectivo registradas en el día",
+            "items": {
+              "description": "Registro de movimiento de caja",
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "example": 3,
+                  "description": "ID único del movimiento",
+                  "format": "int64"
+                },
+                "tipo": {
+                  "type": "string",
+                  "enum": [
+                    "SALIDA"
+                  ],
+                  "example": "SALIDA",
+                  "description": "Tipo de movimiento"
+                },
+                "concepto": {
+                  "type": "string",
+                  "example": "Compra de garrafones de agua",
+                  "description": "Concepto del movimiento"
+                },
+                "monto": {
+                  "type": "number",
+                  "example": 180,
+                  "description": "Monto del movimiento en MXN"
+                },
+                "fecha": {
+                  "type": "string",
+                  "example": "2026-11-20T10:15:00",
+                  "description": "Fecha y hora en que se registró",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "concepto",
+                "fecha",
+                "id",
+                "monto",
+                "tipo"
+              ]
+            }
+          }
+        },
+        "required": [
+          "balance",
+          "fecha",
+          "ingresosMembresiasEfectivo",
+          "ingresosMembresiasEnLinea",
+          "numeroVentas",
+          "pagos",
+          "salidas",
+          "totalSalidas",
+          "totalVentas",
+          "ventas"
+        ]
+      }
+order: 1000

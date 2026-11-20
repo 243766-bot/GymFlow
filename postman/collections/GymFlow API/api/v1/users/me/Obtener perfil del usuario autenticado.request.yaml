@@ -1,0 +1,16 @@
+$kind: http-request
+description: Devuelve los datos básicos del usuario dueño del token JWT actual.
+url: "{{baseUrl}}/api/v1/users/me"
+method: GET
+headers:
+  Accept: application/json
+body:
+  type: text
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Obtener perfil del usuario autenticado.resources/examples
+order: 1000

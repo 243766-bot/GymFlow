@@ -1,0 +1,12 @@
+$kind: http-request
+description: Endpoint público que devuelve todos los planes de membresía activos con su duración y precio.
+url: "{{baseUrl}}/api/v1/plans"
+method: GET
+headers:
+  Accept: application/json
+body:
+  type: text
+  content: ""
+settings: {}
+examples: ./.resources/Listar planes disponibles.resources/examples
+order: 2000

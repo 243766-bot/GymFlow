@@ -1,0 +1,79 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/v1/cash-movements"
+  method: POST
+  headers:
+    - key: Content-Type
+      value: application/json
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  body:
+    type: json
+    content: |-
+      {
+        "concepto": "Compra de garrafones de agua y artículos de limpieza",
+        "monto": 180
+      }
+response:
+  statusCode: 201
+  statusText: Created
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "concepto": "Compra de garrafones de agua",
+        "fecha": "2026-11-20T10:15:00",
+        "id": 3,
+        "monto": 180,
+        "tipo": "SALIDA"
+      }
+    $type: |-
+      {
+        "description": "Registro de movimiento de caja",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 3,
+            "description": "ID único del movimiento",
+            "format": "int64"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "SALIDA"
+            ],
+            "example": "SALIDA",
+            "description": "Tipo de movimiento"
+          },
+          "concepto": {
+            "type": "string",
+            "example": "Compra de garrafones de agua",
+            "description": "Concepto del movimiento"
+          },
+          "monto": {
+            "type": "number",
+            "example": 180,
+            "description": "Monto del movimiento en MXN"
+          },
+          "fecha": {
+            "type": "string",
+            "example": "2026-11-20T10:15:00",
+            "description": "Fecha y hora en que se registró",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "concepto",
+          "fecha",
+          "id",
+          "monto",
+          "tipo"
+        ]
+      }
+order: 1000

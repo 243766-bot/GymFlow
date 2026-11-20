@@ -1,0 +1,73 @@
+$kind: http-request
+description: Modifica el nombre, duración o precio de un plan por su ID. Solo ADMIN.
+url: "{{baseUrl}}/api/v1/plans/:id"
+method: PUT
+headers:
+  Content-Type: application/json
+  Accept: application/json
+pathVariables:
+  - key: id
+    value: "1"
+    disabled: false
+    description: ID del plan
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+body:
+  type: json
+  content: |-
+    {
+      "duracionDias": 30,
+      "nombre": "Mensualidad Estándar",
+      "precio": 450
+    }
+  $type: |-
+    {
+      "description": "Datos para crear o actualizar un plan de membresía",
+      "type": "object",
+      "properties": {
+        "nombre": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 80,
+          "example": "Mensualidad Estándar",
+          "description": "Nombre comercial del plan"
+        },
+        "duracionDias": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3650,
+          "example": 30,
+          "description": "Duración de vigencia en días (1 a 3650)",
+          "format": "int32"
+        },
+        "precio": {
+          "type": "number",
+          "minimum": 0.01,
+          "example": 450,
+          "description": "Precio del plan en MXN"
+        }
+      },
+      "required": [
+        "duracionDias",
+        "nombre",
+        "precio"
+      ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Actualizar un plan existente.resources/examples
+order: 1000

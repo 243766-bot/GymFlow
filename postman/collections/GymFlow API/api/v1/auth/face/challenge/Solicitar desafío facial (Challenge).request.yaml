@@ -1,0 +1,12 @@
+$kind: http-request
+description: Genera un token aleatorio de un solo uso con vigencia limitada (TTL) para prevenir ataques de repetición.
+url: "{{baseUrl}}/api/v1/auth/face/challenge"
+method: POST
+headers:
+  Accept: application/json
+body:
+  type: text
+  content: ""
+settings: {}
+examples: ./.resources/Solicitar desafío facial (Challenge).resources/examples
+order: 1000

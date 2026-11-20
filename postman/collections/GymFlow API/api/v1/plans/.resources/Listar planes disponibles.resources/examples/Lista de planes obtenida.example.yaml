@@ -1,0 +1,74 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/v1/plans"
+  method: GET
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      [
+        {
+          "duracionDias": 30,
+          "id": 1,
+          "nombre": "Mensualidad Estándar",
+          "precio": 450
+        },
+        {
+          "duracionDias": 30,
+          "id": 1,
+          "nombre": "Mensualidad Estándar",
+          "precio": 450
+        }
+      ]
+    $type: |-
+      {
+        "type": "array",
+        "items": {
+          "description": "Información de un plan de membresía",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 1,
+              "description": "ID único del plan",
+              "format": "int64"
+            },
+            "nombre": {
+              "type": "string",
+              "example": "Mensualidad Estándar",
+              "description": "Nombre del plan"
+            },
+            "duracionDias": {
+              "type": "integer",
+              "example": 30,
+              "description": "Duración en días",
+              "format": "int32"
+            },
+            "precio": {
+              "type": "number",
+              "example": 450,
+              "description": "Precio en MXN"
+            }
+          },
+          "required": [
+            "duracionDias",
+            "id",
+            "nombre",
+            "precio"
+          ]
+        }
+      }
+order: 1000

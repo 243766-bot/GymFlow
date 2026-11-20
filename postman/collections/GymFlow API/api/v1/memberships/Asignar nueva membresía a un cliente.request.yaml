@@ -1,0 +1,57 @@
+$kind: http-request
+description: Crea una membresía para un usuario y opcionalmente registra el pago en efectivo en caja. Solo ADMIN.
+url: "{{baseUrl}}/api/v1/memberships"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "planId": 1,
+      "usuarioId": 2,
+      "fechaInicio": "2026-11-20",
+      "cobrarEnEfectivo": true
+    }
+  $type: |-
+    {
+      "description": "Solicitud para asignar una membresía a un cliente",
+      "type": "object",
+      "properties": {
+        "usuarioId": {
+          "type": "integer",
+          "example": 2,
+          "description": "ID del cliente",
+          "format": "int64"
+        },
+        "planId": {
+          "type": "integer",
+          "example": 1,
+          "description": "ID del plan contratado",
+          "format": "int64"
+        },
+        "fechaInicio": {
+          "type": "string",
+          "example": "2026-11-20",
+          "description": "Fecha de inicio (opcional; si se omite inicia hoy)",
+          "format": "date"
+        },
+        "cobrarEnEfectivo": {
+          "type": "boolean",
+          "example": true,
+          "description": "Si es true registra el pago en efectivo en caja por el precio del plan"
+        }
+      },
+      "required": [
+        "planId",
+        "usuarioId"
+      ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Asignar nueva membresía a un cliente.resources/examples
+order: 3000

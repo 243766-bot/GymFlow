@@ -1,0 +1,45 @@
+$kind: http-request
+description: Registra un egreso en efectivo (compras de insumos, pagos a proveedores, retiros). Solo ADMIN.
+url: "{{baseUrl}}/api/v1/cash-movements"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "concepto": "Compra de garrafones de agua y artículos de limpieza",
+      "monto": 180
+    }
+  $type: |-
+    {
+      "description": "Solicitud para registrar una salida o gasto de efectivo en caja",
+      "type": "object",
+      "properties": {
+        "concepto": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 150,
+          "example": "Compra de garrafones de agua y artículos de limpieza",
+          "description": "Motivo o descripción del egreso"
+        },
+        "monto": {
+          "type": "number",
+          "minimum": 0.01,
+          "example": 180,
+          "description": "Monto retirado en MXN"
+        }
+      },
+      "required": [
+        "concepto",
+        "monto"
+      ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Registrar salida de dinero de caja.resources/examples
+order: 1000

@@ -1,0 +1,10 @@
+name: GymFlow - Local (Dev)
+values:
+  - key: baseUrl
+    value: ''
+  - key: token
+    value: ''
+  - key: adminEmail
+    value: ''
+  - key: adminPassword
+    value: ''

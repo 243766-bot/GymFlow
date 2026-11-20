@@ -1,0 +1,48 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/v1/auth/face/challenge"
+  method: POST
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "challenge": "f8a9c2e1-4b7d-4e9a-9c3b-1a2b3c4d5e6f",
+        "expiraEnSegundos": 60
+      }
+    $type: |-
+      {
+        "description": "Desafío criptográfico temporal para validar una captura facial en vivo",
+        "type": "object",
+        "properties": {
+          "challenge": {
+            "type": "string",
+            "example": "f8a9c2e1-4b7d-4e9a-9c3b-1a2b3c4d5e6f",
+            "description": "Cadena aleatoria de un solo uso"
+          },
+          "expiraEnSegundos": {
+            "type": "integer",
+            "example": 60,
+            "description": "Tiempo de vida del desafío en segundos",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "challenge",
+          "expiraEnSegundos"
+        ]
+      }
+order: 1000

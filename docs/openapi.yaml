@@ -1,0 +1,3146 @@
+openapi: 3.1.0
+info:
+  title: GymFlow API
+  description: "API REST para administrar clientes, membresías, inventario, ventas\
+    \ y caja de un gimnasio, con inicio de sesión por correo y por reconocimiento\
+    \ facial."
+  version: 1.0.0
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+security:
+- bearerAuth: []
+tags:
+- name: Autenticación
+  description: Registro e inicio de sesión con correo y contraseña. Públicos.
+- name: Login facial
+  description: Desafío de un solo uso e inicio de sesión con el rostro (pantalla de
+    la caja). Públicos.
+- name: Clientes y perfil
+  description: "Perfil propio y CRUD de clientes con baneo. Solo ADMIN, salvo /users/me."
+- name: Rostro de clientes
+  description: "Registro, consulta y eliminación del rostro de un cliente. Solo ADMIN."
+- name: Planes
+  description: "Planes de membresía. La consulta es pública; el resto, solo ADMIN."
+- name: Membresías
+  description: "Alta, edición y renovación (ADMIN) y consulta de la membresía propia\
+    \ (USER)."
+- name: Pagos
+  description: Historial de pagos del cliente. Los cobros en efectivo se registran
+    al asignar o renovar una membresía.
+- name: Productos
+  description: Inventario. Solo ADMIN.
+- name: Ventas
+  description: Registro de ventas con descuento automático de stock. Solo ADMIN.
+- name: Caja
+  description: Salidas de dinero y corte diario. Solo ADMIN.
+paths:
+  /api/v1/users/{id}:
+    get:
+      tags:
+      - Clientes y perfil
+      summary: Consultar detalle de un cliente por ID
+      description: "Devuelve información detallada del cliente, plantilla facial y\
+        \ membresía vigente. Solo ADMIN."
+      operationId: obtener
+      parameters:
+      - name: id
+        in: path
+        description: ID único del usuario
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 2
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Cliente encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClienteResponse"
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - Clientes y perfil
+      summary: Actualizar datos de un usuario
+      description: "Modifica nombre, correo, teléfono y opcionalmente la contraseñ\
+        a de un usuario. Solo ADMIN."
+      operationId: actualizar
+      parameters:
+      - name: id
+        in: path
+        description: ID único del usuario
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsuarioUpdateRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Usuario actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClienteResponse"
+        "400":
+          description: Datos de validación incorrectos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Clientes y perfil
+      summary: Eliminar usuario
+      description: Elimina permanentemente la cuenta de un usuario del sistema. Solo
+        ADMIN.
+      operationId: eliminar
+      parameters:
+      - name: id
+        in: path
+        description: ID único del usuario
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 2
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Usuario eliminado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MensajeResponse"
+        "400":
+          description: No se puede eliminar por registros asociados o autoeliminación
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+  /api/v1/products/{id}:
+    get:
+      tags:
+      - Productos
+      summary: Obtener producto por ID
+      description: Consulta el detalle y existencias de un producto específico. Solo
+        ADMIN.
+      operationId: obtener_1
+      parameters:
+      - name: id
+        in: path
+        description: ID del producto
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Producto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Producto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductoResponse"
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - Productos
+      summary: Actualizar un producto
+      description: "Modifica nombre, categoría, tamaño, precio, stock o estado activo\
+        \ de un producto. Solo ADMIN."
+      operationId: actualizar_1
+      parameters:
+      - name: id
+        in: path
+        description: ID del producto
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductoRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Producto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Producto actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductoResponse"
+        "400":
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Productos
+      summary: Eliminar o desactivar producto
+      description: "Elimina el producto si no tiene ventas registradas, o lo marca\
+        \ como inactivo para conservar historial. Solo ADMIN."
+      operationId: eliminar_1
+      parameters:
+      - name: id
+        in: path
+        description: ID del producto
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Producto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Producto eliminado o desactivado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MensajeResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/plans/{id}:
+    put:
+      tags:
+      - Planes
+      summary: Actualizar un plan existente
+      description: "Modifica el nombre, duración o precio de un plan por su ID. Solo\
+        \ ADMIN."
+      operationId: actualizar_2
+      parameters:
+      - name: id
+        in: path
+        description: ID del plan
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Plan no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Plan actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanResponse"
+        "400":
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Planes
+      summary: Eliminar un plan
+      description: Elimina un plan si no tiene membresías o pagos asociados. Solo
+        ADMIN.
+      operationId: eliminar_2
+      parameters:
+      - name: id
+        in: path
+        description: ID del plan
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Plan no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Plan eliminado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MensajeResponse"
+        "400":
+          description: El plan tiene registros asociados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+  /api/v1/memberships/{id}:
+    put:
+      tags:
+      - Membresías
+      summary: Actualizar datos de una membresía
+      description: "Modifica el plan, fechas o estado (ACTIVA/CANCELADA) de una membresí\
+        a. Solo ADMIN."
+      operationId: actualizar_3
+      parameters:
+      - name: id
+        in: path
+        description: ID de la membresía
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MembresiaUpdateRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Membresía o plan no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Membresía actualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembresiaResponse"
+        "400":
+          description: Fechas inconsistentes o datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+  /api/v1/users:
+    get:
+      tags:
+      - Clientes y perfil
+      summary: Listar todos los usuarios/clientes
+      description: Obtiene el listado completo de usuarios registrados junto con el
+        estado de su rostro y membresía. Solo ADMIN.
+      operationId: listar
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Listado obtenido correctamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClienteResponse"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Clientes y perfil
+      summary: Crear un nuevo usuario o administrador
+      description: Permite al administrador dar de alta un cliente (ROLE_USER) u otro
+        administrador (ROLE_ADMIN).
+      operationId: crear
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsuarioCreateRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "201":
+          description: Usuario creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClienteResponse"
+        "400":
+          description: Datos inválidos o correo duplicado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+  /api/v1/users/{id}/face:
+    get:
+      tags:
+      - Rostro de clientes
+      summary: Consultar estado biométrico del cliente
+      description: "Indica si el cliente tiene un descriptor facial registrado, su\
+        \ fecha de alta y su miniatura en Base64."
+      operationId: consultar
+      parameters:
+      - name: id
+        in: path
+        description: ID del usuario
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 2
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Información facial consultada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FaceInfoResponse"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Rostro de clientes
+      summary: Registrar o actualizar rostro de un cliente
+      description: Guarda el descriptor biométrico de 128 valores flotantes y el consentimiento
+        expreso del cliente.
+      operationId: registrar
+      parameters:
+      - name: id
+        in: path
+        description: ID del usuario
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FaceRegisterRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "201":
+          description: Rostro registrado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MensajeResponse"
+        "400":
+          description: Descriptor inválido o falta consentimiento
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Rostro de clientes
+      summary: Eliminar plantilla facial del cliente
+      description: Borra los datos biométricos almacenados del usuario indicado.
+      operationId: eliminar_3
+      parameters:
+      - name: id
+        in: path
+        description: ID del usuario
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 2
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Usuario o plantilla facial no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Rostro eliminado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MensajeResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/sales:
+    get:
+      tags:
+      - Ventas
+      summary: Listar ventas realizadas
+      description: "Obtiene el historial de ventas, con filtro opcional por fecha\
+        \ exacta (YYYY-MM-DD). Solo ADMIN."
+      operationId: listar_1
+      parameters:
+      - name: fecha
+        in: query
+        description: Filtrar ventas por fecha (ISO-8601)
+        required: false
+        schema:
+          type: string
+          format: date
+        example: 2026-11-20
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Listado de ventas obtenido
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VentaResponse"
+        "400":
+          description: Formato de fecha inválido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Ventas
+      summary: Registrar una nueva venta
+      description: "Procesa la venta de uno o varios productos, descuenta el stock\
+        \ automáticamente y calcula el total. Solo ADMIN."
+      operationId: registrar_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VentaRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Producto o cliente no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "201":
+          description: Venta registrada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VentaResponse"
+        "400":
+          description: "Stock insuficiente, producto inactivo o lista vacía"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+  /api/v1/products:
+    get:
+      tags:
+      - Productos
+      summary: Listar productos del inventario
+      description: Obtiene todos los productos registrados (activos e inactivos).
+        Solo ADMIN.
+      operationId: listar_2
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Inventario obtenido
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductoResponse"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Productos
+      summary: Registrar nuevo producto
+      description: Da de alta un producto en el catálogo con precio y stock inicial.
+        Solo ADMIN.
+      operationId: crear_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductoRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "201":
+          description: Producto creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductoResponse"
+        "400":
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+  /api/v1/plans:
+    get:
+      tags:
+      - Planes
+      summary: Listar planes disponibles
+      description: Endpoint público que devuelve todos los planes de membresía activos
+        con su duración y precio.
+      operationId: listar_3
+      responses:
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: "Acceso denegado: rol insuficiente, cuenta suspendida o lí\
+            mite excedido"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Lista de planes obtenida
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlanResponse"
+      security: []
+    post:
+      tags:
+      - Planes
+      summary: Crear nuevo plan de membresía
+      description: "Registra un plan con nombre único, duración en días y precio.\
+        \ Solo ADMIN."
+      operationId: crear_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "201":
+          description: Plan creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanResponse"
+        "400":
+          description: Datos inválidos o nombre de plan duplicado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+  /api/v1/payments/checkout:
+    post:
+      tags:
+      - Pagos
+      summary: Iniciar checkout de pago en línea
+      description: Crea una preferencia de pago en Mercado Pago para el plan seleccionado
+        y devuelve la URL de pago.
+      operationId: checkout
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol USER
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Plan no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Error al comunicarse con la API de Mercado Pago
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "201":
+          description: Preferencia de pago creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutResponse"
+        "400":
+          description: Plan inválido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+  /api/v1/memberships:
+    get:
+      tags:
+      - Membresías
+      summary: Listar membresías
+      description: "Devuelve todas las membresías registradas, con filtro opcional\
+        \ por ID de cliente. Solo ADMIN."
+      operationId: listar_4
+      parameters:
+      - name: usuarioId
+        in: query
+        description: Filtrar membresías por ID del cliente
+        required: false
+        schema:
+          type: integer
+          format: int64
+        example: 3
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Listado de membresías obtenido
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MembresiaResponse"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Membresías
+      summary: Asignar nueva membresía a un cliente
+      description: Crea una membresía para un usuario y opcionalmente registra el
+        pago en efectivo en caja. Solo ADMIN.
+      operationId: crear_3
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MembresiaRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Usuario o plan no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "201":
+          description: Membresía creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembresiaResponse"
+        "400":
+          description: Datos inválidos o el cliente ya posee una membresía activa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+  /api/v1/memberships/{id}/renew:
+    post:
+      tags:
+      - Membresías
+      summary: Renovar una membresía
+      description: "Extiende la vigencia de la membresía con el mismo plan u otro\
+        \ nuevo, y permite registrar el cobro en efectivo. El cuerpo JSON es opcional.\
+        \ Solo ADMIN."
+      operationId: renovar
+      parameters:
+      - name: id
+        in: path
+        description: ID de la membresía
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenovarRequest"
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Membresía o plan no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Membresía renovada correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembresiaResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/cash-movements:
+    post:
+      tags:
+      - Caja
+      summary: Registrar salida de dinero de caja
+      description: "Registra un egreso en efectivo (compras de insumos, pagos a proveedores,\
+        \ retiros). Solo ADMIN."
+      operationId: registrarSalida
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MovimientoCajaRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "201":
+          description: Salida registrada en caja
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MovimientoCajaResponse"
+        "400":
+          description: Concepto o monto inválido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+  /api/v1/auth/register:
+    post:
+      tags:
+      - Autenticación
+      summary: Registrar nuevo cliente
+      description: Crea una cuenta de cliente (ROLE_USER) y devuelve su token JWT
+        de acceso.
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: "Acceso denegado: rol insuficiente, cuenta suspendida o lí\
+            mite excedido"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "201":
+          description: Usuario registrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Datos inválidos o correo ya registrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security: []
+  /api/v1/auth/login:
+    post:
+      tags:
+      - Autenticación
+      summary: Iniciar sesión con correo y contraseña
+      description: Autentica las credenciales del usuario (ADMIN o USER) y genera
+        un token Bearer JWT.
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: Credenciales incorrectas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Cuenta suspendida / baneada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Autenticación exitosa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Formato de solicitud inválido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security: []
+  /api/v1/auth/face/login:
+    post:
+      tags:
+      - Login facial
+      summary: Iniciar sesión con reconocimiento facial
+      description: "Valida el desafío y compara el descriptor facial de 128 dimensiones\
+        \ contra las plantillas registradas. Devuelve JWT, datos del usuario y estado\
+        \ de su membresía."
+      operationId: login_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FaceLoginRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: Rostro no reconocido o desafío inválido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Cuenta suspendida o límite de intentos excedido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Rostro reconocido e inicio de sesión exitoso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FaceLoginResponse"
+        "400":
+          description: Descriptor inválido o desafío expirado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security: []
+  /api/v1/auth/face/challenge:
+    post:
+      tags:
+      - Login facial
+      summary: Solicitar desafío facial (Challenge)
+      description: Genera un token aleatorio de un solo uso con vigencia limitada
+        (TTL) para prevenir ataques de repetición.
+      operationId: challenge
+      responses:
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: "Acceso denegado: rol insuficiente, cuenta suspendida o lí\
+            mite excedido"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Desafío generado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FaceChallengeResponse"
+      security: []
+  /api/v1/users/{id}/ban:
+    patch:
+      tags:
+      - Clientes y perfil
+      summary: Banear o reactivar acceso de un usuario
+      description: Suspende (baneado=true) o reactiva (baneado=false) la cuenta de
+        un cliente. Solo ADMIN.
+      operationId: banear
+      parameters:
+      - name: id
+        in: path
+        description: ID único del usuario
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BanRequest"
+        required: true
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Estado de acceso actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClienteResponse"
+        "400":
+          description: Solicitud inválida (ej. intentar banearse a sí mismo)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+  /api/v1/users/me:
+    get:
+      tags:
+      - Clientes y perfil
+      summary: Obtener perfil del usuario autenticado
+      description: Devuelve los datos básicos del usuario dueño del token JWT actual.
+      operationId: me
+      responses:
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: Token JWT ausente o inválido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: "Acceso denegado: rol insuficiente, cuenta suspendida o lí\
+            mite excedido"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Perfil obtenido correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsuarioResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/sales/{id}:
+    get:
+      tags:
+      - Ventas
+      summary: Obtener ticket/detalle de una venta
+      description: Consulta el desglose completo de artículos vendidos por ID de venta.
+        Solo ADMIN.
+      operationId: obtener_2
+      parameters:
+      - name: id
+        in: path
+        description: ID de la venta
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Venta no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Venta encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VentaResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/payments/{id}/status:
+    get:
+      tags:
+      - Pagos
+      summary: Consultar estado de un pago en línea
+      description: "Verifica en Mercado Pago si el pago fue aprobado; si se aprobó\
+        , activa o renueva la membresía automáticamente."
+      operationId: estado
+      parameters:
+      - name: id
+        in: path
+        description: ID interno del pago
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 10
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: No tienes permiso para consultar este pago
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Pago no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Error al consultar Mercado Pago
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Estado del pago consultado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagoEstadoResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/payments/me:
+    get:
+      tags:
+      - Pagos
+      summary: Consultar historial de pagos propios
+      description: Devuelve todos los pagos (en efectivo y en línea) realizados por
+        el cliente autenticado.
+      operationId: misPagos
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol USER
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Historial de pagos obtenido
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PagoResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/memberships/me:
+    get:
+      tags:
+      - Membresías
+      summary: Consultar mi membresía actual
+      description: Devuelve la membresía activa o más reciente del cliente autenticado
+        (ROLE_USER).
+      operationId: miMembresia
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol USER
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: El cliente aún no tiene membresías registradas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Membresía encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembresiaResponse"
+      security:
+      - bearerAuth: []
+  /api/v1/cashreport/daily:
+    get:
+      tags:
+      - Caja
+      summary: Obtener corte diario de caja
+      description: "Consolida ingresos por ventas, membresías en efectivo, membresí\
+        as en línea, salidas y balance neto del día (si no se envía fecha, usa hoy).\
+        \ Solo ADMIN."
+      operationId: corteDiario
+      parameters:
+      - name: date
+        in: query
+        description: "Fecha del corte en formato YYYY-MM-DD (opcional, por defecto\
+          \ hoy)"
+        required: false
+        schema:
+          type: string
+          format: date
+        example: 2026-11-20
+      responses:
+        "500":
+          description: Error interno inesperado del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: No autenticado o credenciales/token JWT inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Requiere rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Recurso solicitado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Fallo de comunicación con servicio externo (Mercado Pago)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "200":
+          description: Corte diario generado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CorteDiarioResponse"
+        "400":
+          description: Formato de fecha inválido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    ApiError:
+      type: object
+      description: Estructura estandarizada para respuestas de error HTTP (4xx y 5xx)
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Fecha y hora en que ocurrió el error
+          example: 2026-11-20T13:15:30
+        status:
+          type: integer
+          format: int32
+          description: Código de estado HTTP
+          example: 400
+        error:
+          type: string
+          description: Nombre estándar del estado HTTP
+          example: Bad Request
+        message:
+          type: string
+          description: Detalle legible de la causa del error
+          example: El correo ya está registrado
+      required:
+      - error
+      - message
+      - status
+      - timestamp
+    UsuarioUpdateRequest:
+      type: object
+      description: Datos para actualizar la información de un usuario
+      properties:
+        nombre:
+          type: string
+          description: Nombre actualizado del usuario
+          example: Ana María López
+          maxLength: 100
+          minLength: 0
+          pattern: "^[\\p{L}][\\p{L}\\s.'’-]*$"
+        email:
+          type: string
+          format: email
+          description: Correo electrónico actualizado
+          example: ana.lopez@gymflow.com
+          maxLength: 150
+          minLength: 0
+          pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$"
+        telefono:
+          type: string
+          description: Teléfono celular de 10 dígitos
+          example: "9679876543"
+          pattern: "^([0-9]{10})?$"
+        password:
+          type: string
+          description: Nueva contraseña (opcional; si se omite o va vacía no se modifica)
+          example: NuevaPass2026
+          pattern: "^$|^(?=.*[A-Za-z])(?=.*\\d)[\\x20-\\x7E]{8,72}$"
+      required:
+      - email
+      - nombre
+    ClienteResponse:
+      type: object
+      description: Vista administrativa completa de un cliente incluyendo estado biométrico
+        y membresía
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID único del cliente
+          example: 2
+        nombre:
+          type: string
+          description: Nombre completo
+          example: Carlos Mendoza
+        email:
+          type: string
+          description: Correo electrónico
+          example: carlos@gymflow.com
+        telefono:
+          type: string
+          description: Teléfono a 10 dígitos
+          example: "9671234567"
+        rol:
+          type: string
+          description: Rol asignado
+          enum:
+          - ROLE_USER
+          - ROLE_ADMIN
+          example: ROLE_USER
+        activo:
+          type: boolean
+          description: Estado de cuenta (false = baneado)
+          example: true
+        fechaRegistro:
+          type: string
+          format: date-time
+          description: Fecha y hora de registro
+          example: 2026-11-01T09:00:00
+        rostroRegistrado:
+          type: boolean
+          description: Indica si cuenta con rostro enrolado
+          example: true
+        membresia:
+          $ref: "#/components/schemas/MembresiaResponse"
+          description: Membresía actual o más reciente (null si nunca ha tenido)
+      required:
+      - activo
+      - email
+      - fechaRegistro
+      - id
+      - nombre
+      - rol
+      - rostroRegistrado
+    MembresiaResponse:
+      type: object
+      description: Detalle de membresía con estado calculado en tiempo real y días
+        restantes
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID único de la membresía
+          example: 5
+        usuarioId:
+          type: integer
+          format: int64
+          description: ID del cliente titular
+          example: 2
+        usuarioNombre:
+          type: string
+          description: Nombre del cliente titular
+          example: Carlos Mendoza
+        plan:
+          $ref: "#/components/schemas/PlanResponse"
+          description: Plan contratado
+        fechaInicio:
+          type: string
+          format: date
+          description: Fecha de inicio de vigencia
+          example: 2026-11-01
+        fechaVencimiento:
+          type: string
+          format: date
+          description: Fecha de vencimiento
+          example: 2026-12-01
+        estado:
+          type: string
+          description: Estado calculado de la membresía
+          enum:
+          - ACTIVA
+          - VENCIDA
+          - CANCELADA
+          example: ACTIVA
+        diasRestantes:
+          type: integer
+          format: int64
+          description: Días restantes de vigencia (0 si está vencida o cancelada)
+          example: 11
+      required:
+      - diasRestantes
+      - estado
+      - fechaInicio
+      - fechaVencimiento
+      - id
+      - plan
+      - usuarioId
+      - usuarioNombre
+    PlanResponse:
+      type: object
+      description: Información de un plan de membresía
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID único del plan
+          example: 1
+        nombre:
+          type: string
+          description: Nombre del plan
+          example: Mensualidad Estándar
+        duracionDias:
+          type: integer
+          format: int32
+          description: Duración en días
+          example: 30
+        precio:
+          type: number
+          description: Precio en MXN
+          example: 450.0
+      required:
+      - duracionDias
+      - id
+      - nombre
+      - precio
+    ProductoRequest:
+      type: object
+      description: Datos para crear o actualizar un producto en inventario
+      properties:
+        nombre:
+          type: string
+          description: Nombre del producto
+          example: Proteína Whey Gold Standard
+          maxLength: 100
+          minLength: 0
+        categoria:
+          type: string
+          description: Categoría del producto
+          example: Suplementos
+          maxLength: 60
+          minLength: 0
+        tamano:
+          type: string
+          description: Presentación o tamaño (opcional)
+          example: 907 g
+          maxLength: 40
+          minLength: 0
+        precio:
+          type: number
+          description: Precio unitario de venta en MXN
+          example: 890.0
+          minimum: 0.01
+        stock:
+          type: integer
+          format: int32
+          description: Cantidad disponible en inventario
+          example: 15
+          maximum: 100000
+          minimum: 0
+        activo:
+          type: boolean
+          description: Indica si el producto está disponible para la venta
+          example: true
+      required:
+      - categoria
+      - nombre
+      - precio
+      - stock
+    ProductoResponse:
+      type: object
+      description: Información de un producto del inventario
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID único del producto
+          example: 1
+        nombre:
+          type: string
+          description: Nombre del producto
+          example: Proteína Whey Gold Standard
+        categoria:
+          type: string
+          description: Categoría
+          example: Suplementos
+        tamano:
+          type: string
+          description: Tamaño o presentación
+          example: 907 g
+        precio:
+          type: number
+          description: Precio unitario en MXN
+          example: 890.0
+        stock:
+          type: integer
+          format: int32
+          description: Existencias actuales
+          example: 15
+        activo:
+          type: boolean
+          description: Estado del producto en catálogo
+          example: true
+      required:
+      - activo
+      - categoria
+      - id
+      - nombre
+      - precio
+      - stock
+    PlanRequest:
+      type: object
+      description: Datos para crear o actualizar un plan de membresía
+      properties:
+        nombre:
+          type: string
+          description: Nombre comercial del plan
+          example: Mensualidad Estándar
+          maxLength: 80
+          minLength: 0
+        duracionDias:
+          type: integer
+          format: int32
+          description: Duración de vigencia en días (1 a 3650)
+          example: 30
+          maximum: 3650
+          minimum: 1
+        precio:
+          type: number
+          description: Precio del plan en MXN
+          example: 450.0
+          minimum: 0.01
+      required:
+      - duracionDias
+      - nombre
+      - precio
+    MembresiaUpdateRequest:
+      type: object
+      description: Campos editables de una membresía existente (todos opcionales)
+      properties:
+        planId:
+          type: integer
+          format: int64
+          description: Nuevo ID de plan
+          example: 2
+        fechaInicio:
+          type: string
+          format: date
+          description: Nueva fecha de inicio
+          example: 2026-11-20
+        fechaVencimiento:
+          type: string
+          format: date
+          description: Nueva fecha de vencimiento
+          example: 2026-12-20
+        estado:
+          type: string
+          description: Estado administrativo de la membresía
+          enum:
+          - ACTIVA
+          - CANCELADA
+          example: ACTIVA
+    UsuarioCreateRequest:
+      type: object
+      description: Datos para creación de usuarios o administradores por parte de
+        un ADMIN
+      properties:
+        nombre:
+          type: string
+          description: Nombre completo del usuario
+          example: Ana López
+          maxLength: 100
+          minLength: 0
+          pattern: "^[\\p{L}][\\p{L}\\s.'’-]*$"
+        email:
+          type: string
+          format: email
+          description: Correo electrónico único
+          example: ana.lopez@gymflow.com
+          maxLength: 150
+          minLength: 0
+          pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$"
+        password:
+          type: string
+          description: "Contraseña (8 a 72 caracteres, letras y números)"
+          example: AnaGym2026
+          minLength: 1
+          pattern: "^(?=.*[A-Za-z])(?=.*\\d)[\\x20-\\x7E]{8,72}$"
+        telefono:
+          type: string
+          description: Teléfono celular de 10 dígitos (opcional)
+          example: "9679876543"
+          pattern: "^([0-9]{10})?$"
+        rol:
+          type: string
+          description: Rol asignado al usuario (por defecto ROLE_USER)
+          enum:
+          - ROLE_USER
+          - ROLE_ADMIN
+          example: ROLE_USER
+          pattern: ROLE_USER|ROLE_ADMIN
+      required:
+      - email
+      - nombre
+      - password
+    FaceRegisterRequest:
+      type: object
+      description: Datos para enrolar la plantilla facial de un cliente
+      properties:
+        descriptor:
+          type: array
+          description: Vector descriptor facial de exactamente 128 valores numéricos
+          items:
+            type: number
+            format: double
+          maxItems: 128
+          minItems: 128
+        consentimiento:
+          type: boolean
+          description: Confirmación explícita de consentimiento biométrico del cliente
+          example: true
+        foto:
+          type: string
+          description: Miniatura JPEG en formato Data URL Base64 (opcional)
+          example: "data:image/jpeg;base64,/9j/4AAQSkZJRg..."
+          maxLength: 300000
+          minLength: 0
+      required:
+      - consentimiento
+      - descriptor
+    MensajeResponse:
+      type: object
+      description: Respuesta estándar de confirmación de operación
+      properties:
+        mensaje:
+          type: string
+          description: Mensaje descriptivo del resultado
+          example: Operación realizada correctamente
+      required:
+      - mensaje
+    VentaItemRequest:
+      type: object
+      description: Renglón de producto y cantidad dentro de una venta
+      properties:
+        productoId:
+          type: integer
+          format: int64
+          description: ID del producto a vender
+          example: 1
+        cantidad:
+          type: integer
+          format: int32
+          description: Unidades vendidas (1 a 1000)
+          example: 2
+          maximum: 1000
+          minimum: 1
+      required:
+      - cantidad
+      - productoId
+    VentaRequest:
+      type: object
+      description: Solicitud de registro de una venta en mostrador
+      properties:
+        clienteId:
+          type: integer
+          format: int64
+          description: ID del cliente comprador (opcional para venta al público general)
+          example: 2
+        items:
+          type: array
+          description: Lista de productos incluidos en la venta (1 a 50 artículos
+            distintos)
+          items:
+            $ref: "#/components/schemas/VentaItemRequest"
+          maxItems: 50
+          minItems: 0
+      required:
+      - items
+    DetalleVentaResponse:
+      type: object
+      description: Desglose por artículo de una venta realizada
+      properties:
+        productoId:
+          type: integer
+          format: int64
+          description: ID del producto vendido
+          example: 1
+        producto:
+          type: string
+          description: Nombre del producto
+          example: Agua Natural 600 ml
+        cantidad:
+          type: integer
+          format: int32
+          description: Cantidad vendida
+          example: 2
+        precioUnitario:
+          type: number
+          description: Precio unitario aplicado al momento de la venta
+          example: 15.0
+        subtotal:
+          type: number
+          description: Subtotal del renglón (cantidad * precioUnitario)
+          example: 30.0
+      required:
+      - cantidad
+      - precioUnitario
+      - producto
+      - productoId
+      - subtotal
+    VentaResponse:
+      type: object
+      description: Comprobante detallado de una venta
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID único de la venta
+          example: 7
+        fecha:
+          type: string
+          format: date-time
+          description: Fecha y hora de la venta
+          example: 2026-11-20T11:20:00
+        total:
+          type: number
+          description: Importe total de la venta en MXN
+          example: 30.0
+        atendidoPor:
+          type: string
+          description: Nombre del administrador que registró la venta
+          example: Administrador GymFlow
+        clienteId:
+          type: integer
+          format: int64
+          description: ID del cliente (null si fue venta general)
+          example: 2
+        clienteNombre:
+          type: string
+          description: Nombre del cliente (null si fue venta general)
+          example: Carlos Mendoza
+        detalles:
+          type: array
+          description: Lista de productos vendidos
+          items:
+            $ref: "#/components/schemas/DetalleVentaResponse"
+      required:
+      - atendidoPor
+      - detalles
+      - fecha
+      - id
+      - total
+    CheckoutRequest:
+      type: object
+      description: Solicitud de pago en línea mediante Mercado Pago
+      properties:
+        planId:
+          type: integer
+          format: int64
+          description: ID del plan a pagar en línea
+          example: 1
+      required:
+      - planId
+    CheckoutResponse:
+      type: object
+      description: Datos de redirección a la pasarela de pago Mercado Pago
+      properties:
+        pagoId:
+          type: integer
+          format: int64
+          description: ID interno del registro de pago
+          example: 14
+        preferenciaId:
+          type: string
+          description: Identificador de preferencia en Mercado Pago
+          example: 3847055086-a1b2c3d4-e5f6
+        urlPago:
+          type: string
+          description: URL de Checkout Pro a la cual redirigir al cliente
+          example: https://www.mercadopago.com.mx/checkout/v1/redirect?pref_id=...
+      required:
+      - pagoId
+      - preferenciaId
+      - urlPago
+    MembresiaRequest:
+      type: object
+      description: Solicitud para asignar una membresía a un cliente
+      properties:
+        usuarioId:
+          type: integer
+          format: int64
+          description: ID del cliente
+          example: 2
+        planId:
+          type: integer
+          format: int64
+          description: ID del plan contratado
+          example: 1
+        fechaInicio:
+          type: string
+          format: date
+          description: Fecha de inicio (opcional; si se omite inicia hoy)
+          example: 2026-11-20
+        cobrarEnEfectivo:
+          type: boolean
+          description: Si es true registra el pago en efectivo en caja por el precio
+            del plan
+          example: true
+      required:
+      - planId
+      - usuarioId
+    RenovarRequest:
+      type: object
+      description: Parámetros opcionales para renovar una membresía
+      properties:
+        planId:
+          type: integer
+          format: int64
+          description: ID del plan para la renovación (si se omite conserva el actual)
+          example: 1
+        cobrarEnEfectivo:
+          type: boolean
+          description: true para registrar el cobro en efectivo en caja
+          example: true
+    MovimientoCajaRequest:
+      type: object
+      description: Solicitud para registrar una salida o gasto de efectivo en caja
+      properties:
+        concepto:
+          type: string
+          description: Motivo o descripción del egreso
+          example: Compra de garrafones de agua y artículos de limpieza
+          maxLength: 150
+          minLength: 0
+        monto:
+          type: number
+          description: Monto retirado en MXN
+          example: 180.0
+          minimum: 0.01
+      required:
+      - concepto
+      - monto
+    MovimientoCajaResponse:
+      type: object
+      description: Registro de movimiento de caja
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID único del movimiento
+          example: 3
+        tipo:
+          type: string
+          description: Tipo de movimiento
+          enum:
+          - SALIDA
+          example: SALIDA
+        concepto:
+          type: string
+          description: Concepto del movimiento
+          example: Compra de garrafones de agua
+        monto:
+          type: number
+          description: Monto del movimiento en MXN
+          example: 180.0
+        fecha:
+          type: string
+          format: date-time
+          description: Fecha y hora en que se registró
+          example: 2026-11-20T10:15:00
+      required:
+      - concepto
+      - fecha
+      - id
+      - monto
+      - tipo
+    RegisterRequest:
+      type: object
+      description: Datos requeridos para el autorregistro de un nuevo cliente
+      properties:
+        nombre:
+          type: string
+          description: Nombre completo del cliente
+          example: Carlos Mendoza
+          maxLength: 100
+          minLength: 0
+          pattern: "^[\\p{L}][\\p{L}\\s.'’-]*$"
+        email:
+          type: string
+          format: email
+          description: Correo electrónico único
+          example: carlos@gymflow.com
+          maxLength: 150
+          minLength: 0
+          pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$"
+        password:
+          type: string
+          description: "Contraseña (8 a 72 caracteres, al menos una letra y un nú\
+            mero)"
+          example: Cliente2026
+          minLength: 1
+          pattern: "^(?=.*[A-Za-z])(?=.*\\d)[\\x20-\\x7E]{8,72}$"
+        telefono:
+          type: string
+          description: Teléfono celular a 10 dígitos (opcional)
+          example: "9671234567"
+          pattern: "^([0-9]{10})?$"
+      required:
+      - email
+      - nombre
+      - password
+    AuthResponse:
+      type: object
+      description: Respuesta de autenticación exitosa con token JWT y datos del usuario
+      properties:
+        token:
+          type: string
+          description: Token de acceso JWT
+          example: eyJhbGciOiJIUzI1NiJ9...
+        tipo:
+          type: string
+          description: Esquema del token
+          example: Bearer
+        usuario:
+          $ref: "#/components/schemas/UsuarioResponse"
+          description: Información del usuario autenticado
+      required:
+      - tipo
+      - token
+      - usuario
+    UsuarioResponse:
+      type: object
+      description: Información pública del perfil de usuario (excluye contraseña)
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID único del usuario
+          example: 2
+        nombre:
+          type: string
+          description: Nombre completo
+          example: Carlos Mendoza
+        email:
+          type: string
+          description: Correo electrónico
+          example: carlos@gymflow.com
+        telefono:
+          type: string
+          description: Teléfono a 10 dígitos
+          example: "9671234567"
+        rol:
+          type: string
+          description: Rol del usuario en el sistema
+          enum:
+          - ROLE_USER
+          - ROLE_ADMIN
+          example: ROLE_USER
+        activo:
+          type: boolean
+          description: Indica si la cuenta está activa (false = baneado)
+          example: true
+        fechaRegistro:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación de la cuenta
+          example: 2026-11-01T09:00:00
+      required:
+      - activo
+      - email
+      - fechaRegistro
+      - id
+      - nombre
+      - rol
+    LoginRequest:
+      type: object
+      description: Credenciales para inicio de sesión con correo y contraseña
+      properties:
+        email:
+          type: string
+          format: email
+          description: Correo electrónico registrado
+          example: admin@gymflow.com
+          minLength: 1
+        password:
+          type: string
+          description: Contraseña de la cuenta
+          example: Admin12345
+          minLength: 1
+      required:
+      - email
+      - password
+    FaceLoginRequest:
+      type: object
+      description: Solicitud de autenticación biométrica mediante vector facial
+      properties:
+        challenge:
+          type: string
+          description: Desafío vigente obtenido en /api/v1/auth/face/challenge
+          example: f8a9c2e1-4b7d-4e9a-9c3b-1a2b3c4d5e6f
+          minLength: 1
+        descriptor:
+          type: array
+          description: Vector descriptor facial de exactamente 128 valores numéricos
+          items:
+            type: number
+            format: double
+          maxItems: 128
+          minItems: 128
+      required:
+      - challenge
+      - descriptor
+    FaceLoginResponse:
+      type: object
+      description: Respuesta de acceso por reconocimiento facial en recepción/caja
+      properties:
+        token:
+          type: string
+          description: Token de acceso JWT
+          example: eyJhbGciOiJIUzI1NiJ9...
+        tipo:
+          type: string
+          description: Esquema del token
+          example: Bearer
+        usuario:
+          $ref: "#/components/schemas/UsuarioResponse"
+          description: Datos del usuario identificado
+        membresia:
+          $ref: "#/components/schemas/MembresiaResponse"
+          description: Membresía actual del cliente (null si no tiene)
+      required:
+      - tipo
+      - token
+      - usuario
+    FaceChallengeResponse:
+      type: object
+      description: Desafío criptográfico temporal para validar una captura facial
+        en vivo
+      properties:
+        challenge:
+          type: string
+          description: Cadena aleatoria de un solo uso
+          example: f8a9c2e1-4b7d-4e9a-9c3b-1a2b3c4d5e6f
+        expiraEnSegundos:
+          type: integer
+          format: int64
+          description: Tiempo de vida del desafío en segundos
+          example: 60
+      required:
+      - challenge
+      - expiraEnSegundos
+    BanRequest:
+      type: object
+      description: Solicitud para suspender o reactivar el acceso de un usuario
+      properties:
+        baneado:
+          type: boolean
+          description: true para banear/suspender acceso; false para reactivar
+          example: true
+      required:
+      - baneado
+    FaceInfoResponse:
+      type: object
+      description: Estado del registro biométrico facial de un usuario
+      properties:
+        registrado:
+          type: boolean
+          description: Indica si el cliente tiene plantilla facial registrada
+          example: true
+        fechaRegistro:
+          type: string
+          format: date-time
+          description: Fecha y hora de registro biométrico (null si no está registrado)
+          example: 2026-11-15T10:30:00
+        foto:
+          type: string
+          description: Miniatura JPEG en Base64 si fue almacenada
+      required:
+      - registrado
+    PagoEstadoResponse:
+      type: object
+      description: Resultado de verificación de estado de pago en línea y membresía
+        activada
+      properties:
+        pago:
+          $ref: "#/components/schemas/PagoResponse"
+          description: Detalle actualizado del pago
+        membresia:
+          $ref: "#/components/schemas/MembresiaResponse"
+          description: Membresía activada o renovada (null mientras el pago no esté
+            APROBADO)
+      required:
+      - pago
+    PagoResponse:
+      type: object
+      description: Registro de pago de membresía
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID único del pago
+          example: 14
+        usuarioId:
+          type: integer
+          format: int64
+          description: ID del cliente que realizó el pago
+          example: 2
+        usuarioNombre:
+          type: string
+          description: Nombre del cliente
+          example: Carlos Mendoza
+        membresiaId:
+          type: integer
+          format: int64
+          description: ID de la membresía asociada (null si el pago sigue pendiente)
+          example: 5
+        concepto:
+          type: string
+          description: Concepto cobrado
+          example: "Membresía: Mensualidad Estándar"
+        monto:
+          type: number
+          description: Monto cobrado en MXN
+          example: 450.0
+        metodo:
+          type: string
+          description: Método de pago utilizado
+          enum:
+          - EFECTIVO
+          - MERCADO_PAGO
+          example: MERCADO_PAGO
+        estado:
+          type: string
+          description: Estado del pago
+          enum:
+          - APROBADO
+          - PENDIENTE
+          - RECHAZADO
+          example: APROBADO
+        fecha:
+          type: string
+          format: date-time
+          description: Fecha y hora del pago
+          example: 2026-11-20T12:40:00
+      required:
+      - concepto
+      - estado
+      - fecha
+      - id
+      - metodo
+      - monto
+      - usuarioId
+      - usuarioNombre
+    CorteDiarioResponse:
+      type: object
+      description: Reporte financiero consolidado del corte diario de caja
+      properties:
+        fecha:
+          type: string
+          format: date
+          description: Fecha consultada del corte
+          example: 2026-11-20
+        numeroVentas:
+          type: integer
+          format: int32
+          description: Total de tickets de venta emitidos en el día
+          example: 4
+        totalVentas:
+          type: number
+          description: Suma de ingresos por ventas de productos
+          example: 620.0
+        ingresosMembresiasEfectivo:
+          type: number
+          description: Ingresos por membresías cobradas en efectivo
+          example: 900.0
+        ingresosMembresiasEnLinea:
+          type: number
+          description: Ingresos por membresías aprobadas vía Mercado Pago
+          example: 450.0
+        totalSalidas:
+          type: number
+          description: Total de egresos/salidas registradas en caja
+          example: 180.0
+        balance:
+          type: number
+          description: Balance neto del día (ventas + membresías - salidas)
+          example: 1790.0
+        ventas:
+          type: array
+          description: Listado resumido de ventas del día
+          items:
+            $ref: "#/components/schemas/VentaResumenResponse"
+        pagos:
+          type: array
+          description: Listado de pagos de membresía aprobados en el día
+          items:
+            $ref: "#/components/schemas/PagoResponse"
+        salidas:
+          type: array
+          description: Listado de salidas de efectivo registradas en el día
+          items:
+            $ref: "#/components/schemas/MovimientoCajaResponse"
+      required:
+      - balance
+      - fecha
+      - ingresosMembresiasEfectivo
+      - ingresosMembresiasEnLinea
+      - numeroVentas
+      - pagos
+      - salidas
+      - totalSalidas
+      - totalVentas
+      - ventas
+    VentaResumenResponse:
+      type: object
+      description: Resumen ejecutivo de una venta dentro del corte diario de caja
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID de la venta
+          example: 7
+        fecha:
+          type: string
+          format: date-time
+          description: Fecha y hora de la venta
+          example: 2026-11-20T11:20:00
+        total:
+          type: number
+          description: Total cobrado en MXN
+          example: 30.0
+        atendidoPor:
+          type: string
+          description: Administrador que atendió
+          example: Administrador GymFlow
+        clienteNombre:
+          type: string
+          description: Nombre del cliente
+          example: Carlos Mendoza
+        articulos:
+          type: integer
+          format: int32
+          description: Cantidad total de artículos vendidos
+          example: 2
+      required:
+      - articulos
+      - atendidoPor
+      - fecha
+      - id
+      - total
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

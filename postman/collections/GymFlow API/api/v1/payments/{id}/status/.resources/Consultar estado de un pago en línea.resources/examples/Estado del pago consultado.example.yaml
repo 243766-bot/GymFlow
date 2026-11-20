@@ -1,0 +1,234 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/v1/payments/:id/status"
+  method: GET
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: id
+      value: "10"
+      disabled: false
+      description: ID interno del pago
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "pago": {
+          "concepto": "Membresía: Mensualidad Estándar",
+          "estado": "APROBADO",
+          "fecha": "2026-11-20T12:40:00",
+          "id": 14,
+          "metodo": "MERCADO_PAGO",
+          "monto": 450,
+          "usuarioId": 2,
+          "usuarioNombre": "Carlos Mendoza",
+          "membresiaId": 5
+        },
+        "membresia": {
+          "diasRestantes": 11,
+          "estado": "ACTIVA",
+          "fechaInicio": "2026-11-01",
+          "fechaVencimiento": "2026-12-01",
+          "id": 5,
+          "plan": {
+            "duracionDias": 30,
+            "id": 1,
+            "nombre": "Mensualidad Estándar",
+            "precio": 450
+          },
+          "usuarioId": 2,
+          "usuarioNombre": "Carlos Mendoza"
+        }
+      }
+    $type: |-
+      {
+        "description": "Resultado de verificación de estado de pago en línea y membresía activada",
+        "type": "object",
+        "properties": {
+          "pago": {
+            "type": "object",
+            "description": "Registro de pago de membresía",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 14,
+                "description": "ID único del pago",
+                "format": "int64"
+              },
+              "usuarioId": {
+                "type": "integer",
+                "example": 2,
+                "description": "ID del cliente que realizó el pago",
+                "format": "int64"
+              },
+              "usuarioNombre": {
+                "type": "string",
+                "example": "Carlos Mendoza",
+                "description": "Nombre del cliente"
+              },
+              "membresiaId": {
+                "type": "integer",
+                "example": 5,
+                "description": "ID de la membresía asociada (null si el pago sigue pendiente)",
+                "format": "int64"
+              },
+              "concepto": {
+                "type": "string",
+                "example": "Membresía: Mensualidad Estándar",
+                "description": "Concepto cobrado"
+              },
+              "monto": {
+                "type": "number",
+                "example": 450,
+                "description": "Monto cobrado en MXN"
+              },
+              "metodo": {
+                "type": "string",
+                "enum": [
+                  "EFECTIVO",
+                  "MERCADO_PAGO"
+                ],
+                "example": "MERCADO_PAGO",
+                "description": "Método de pago utilizado"
+              },
+              "estado": {
+                "type": "string",
+                "enum": [
+                  "APROBADO",
+                  "PENDIENTE",
+                  "RECHAZADO"
+                ],
+                "example": "APROBADO",
+                "description": "Estado del pago"
+              },
+              "fecha": {
+                "type": "string",
+                "example": "2026-11-20T12:40:00",
+                "description": "Fecha y hora del pago",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "concepto",
+              "estado",
+              "fecha",
+              "id",
+              "metodo",
+              "monto",
+              "usuarioId",
+              "usuarioNombre"
+            ]
+          },
+          "membresia": {
+            "type": "object",
+            "description": "Detalle de membresía con estado calculado en tiempo real y días restantes",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 5,
+                "description": "ID único de la membresía",
+                "format": "int64"
+              },
+              "usuarioId": {
+                "type": "integer",
+                "example": 2,
+                "description": "ID del cliente titular",
+                "format": "int64"
+              },
+              "usuarioNombre": {
+                "type": "string",
+                "example": "Carlos Mendoza",
+                "description": "Nombre del cliente titular"
+              },
+              "plan": {
+                "type": "object",
+                "description": "Información de un plan de membresía",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "example": 1,
+                    "description": "ID único del plan",
+                    "format": "int64"
+                  },
+                  "nombre": {
+                    "type": "string",
+                    "example": "Mensualidad Estándar",
+                    "description": "Nombre del plan"
+                  },
+                  "duracionDias": {
+                    "type": "integer",
+                    "example": 30,
+                    "description": "Duración en días",
+                    "format": "int32"
+                  },
+                  "precio": {
+                    "type": "number",
+                    "example": 450,
+                    "description": "Precio en MXN"
+                  }
+                },
+                "required": [
+                  "duracionDias",
+                  "id",
+                  "nombre",
+                  "precio"
+                ]
+              },
+              "fechaInicio": {
+                "type": "string",
+                "example": "2026-11-01",
+                "description": "Fecha de inicio de vigencia",
+                "format": "date"
+              },
+              "fechaVencimiento": {
+                "type": "string",
+                "example": "2026-12-01",
+                "description": "Fecha de vencimiento",
+                "format": "date"
+              },
+              "estado": {
+                "type": "string",
+                "enum": [
+                  "ACTIVA",
+                  "VENCIDA",
+                  "CANCELADA"
+                ],
+                "example": "ACTIVA",
+                "description": "Estado calculado de la membresía"
+              },
+              "diasRestantes": {
+                "type": "integer",
+                "example": 11,
+                "description": "Días restantes de vigencia (0 si está vencida o cancelada)",
+                "format": "int64"
+              }
+            },
+            "required": [
+              "diasRestantes",
+              "estado",
+              "fechaInicio",
+              "fechaVencimiento",
+              "id",
+              "plan",
+              "usuarioId",
+              "usuarioNombre"
+            ]
+          }
+        },
+        "required": [
+          "pago"
+        ]
+      }
+order: 1000

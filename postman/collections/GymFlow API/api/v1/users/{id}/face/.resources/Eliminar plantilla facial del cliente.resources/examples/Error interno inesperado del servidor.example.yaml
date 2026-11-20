@@ -1,0 +1,68 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/v1/users/:id/face"
+  method: DELETE
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: id
+      value: "2"
+      disabled: false
+      description: ID del usuario
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 500
+  statusText: Internal Server Error
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "error": "Bad Request",
+        "message": "El correo ya está registrado",
+        "status": 400,
+        "timestamp": "2026-11-20T13:15:30"
+      }
+    $type: |-
+      {
+        "description": "Estructura estandarizada para respuestas de error HTTP (4xx y 5xx)",
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "example": "2026-11-20T13:15:30",
+            "description": "Fecha y hora en que ocurrió el error",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "integer",
+            "example": 400,
+            "description": "Código de estado HTTP",
+            "format": "int32"
+          },
+          "error": {
+            "type": "string",
+            "example": "Bad Request",
+            "description": "Nombre estándar del estado HTTP"
+          },
+          "message": {
+            "type": "string",
+            "example": "El correo ya está registrado",
+            "description": "Detalle legible de la causa del error"
+          }
+        },
+        "required": [
+          "error",
+          "message",
+          "status",
+          "timestamp"
+        ]
+      }
+order: 5000

@@ -10,9 +10,11 @@ import com.gymflow.api.entity.Usuario;
 import com.gymflow.api.exception.BadRequestException;
 import com.gymflow.api.exception.NotFoundException;
 import com.gymflow.api.repository.MembresiaRepository;
+import com.gymflow.api.repository.PagoRepository;
 import com.gymflow.api.repository.PlantillaFacialRepository;
 import com.gymflow.api.repository.RolRepository;
 import com.gymflow.api.repository.UsuarioRepository;
+import com.gymflow.api.repository.VentaRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,17 +33,23 @@ public class UsuarioService {
     private final RolRepository rolRepository;
     private final PlantillaFacialRepository plantillaRepository;
     private final MembresiaRepository membresiaRepository;
+    private final PagoRepository pagoRepository;
+    private final VentaRepository ventaRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UsuarioService(UsuarioRepository usuarioRepository,
                           RolRepository rolRepository,
                           PlantillaFacialRepository plantillaRepository,
                           MembresiaRepository membresiaRepository,
+                          PagoRepository pagoRepository,
+                          VentaRepository ventaRepository,
                           PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
         this.plantillaRepository = plantillaRepository;
         this.membresiaRepository = membresiaRepository;
+        this.pagoRepository = pagoRepository;
+        this.ventaRepository = ventaRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -139,9 +147,14 @@ public class UsuarioService {
         if (usuario.getEmail().equalsIgnoreCase(emailAdmin)) {
             throw new BadRequestException("No puedes eliminar tu propia cuenta");
         }
-        if (membresiaRepository.existsByUsuarioId(id)) {
+
+        // Si ya tiene historial, borrarlo rompería los registros: se debe banear
+        boolean tieneHistorial = membresiaRepository.existsByUsuarioId(id)
+                || pagoRepository.existsByUsuarioId(id)
+                || ventaRepository.existsByClienteIdOrAtendidoPorId(id, id);
+        if (tieneHistorial) {
             throw new BadRequestException(
-                    "Este usuario tiene membresías registradas. Banéalo en lugar de eliminarlo.");
+                    "Este usuario tiene membresías, pagos o ventas registrados. Banéalo en lugar de eliminarlo.");
         }
 
         plantillaRepository.deleteByUsuarioId(id); // si tenía rostro guardado, se borra

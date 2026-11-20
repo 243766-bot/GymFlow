@@ -6,6 +6,7 @@ import com.gymflow.api.entity.Plan;
 import com.gymflow.api.exception.BadRequestException;
 import com.gymflow.api.exception.NotFoundException;
 import com.gymflow.api.repository.MembresiaRepository;
+import com.gymflow.api.repository.PagoRepository;
 import com.gymflow.api.repository.PlanRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -18,10 +19,14 @@ public class PlanService {
 
     private final PlanRepository planRepository;
     private final MembresiaRepository membresiaRepository;
+    private final PagoRepository pagoRepository;
 
-    public PlanService(PlanRepository planRepository, MembresiaRepository membresiaRepository) {
+    public PlanService(PlanRepository planRepository,
+                       MembresiaRepository membresiaRepository,
+                       PagoRepository pagoRepository) {
         this.planRepository = planRepository;
         this.membresiaRepository = membresiaRepository;
+        this.pagoRepository = pagoRepository;
     }
 
     @Transactional(readOnly = true)
@@ -62,8 +67,8 @@ public class PlanService {
         if (!planRepository.existsById(id)) {
             throw new NotFoundException("Plan no encontrado");
         }
-        if (membresiaRepository.existsByPlanId(id)) {
-            throw new BadRequestException("No se puede eliminar: hay membresías que usan este plan");
+        if (membresiaRepository.existsByPlanId(id) || pagoRepository.existsByPlanId(id)) {
+            throw new BadRequestException("No se puede eliminar: hay membresías o pagos que usan este plan");
         }
         planRepository.deleteById(id);
     }

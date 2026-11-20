@@ -1,0 +1,63 @@
+$kind: http-request
+description: Valida el desafío y compara el descriptor facial de 128 dimensiones contra las plantillas registradas. Devuelve JWT, datos del usuario y estado de su membresía.
+url: "{{baseUrl}}/api/v1/auth/face/login"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "challenge": "f8a9c2e1-4b7d-4e9a-9c3b-1a2b3c4d5e6f",
+      "descriptor": [
+        5319.375619224425,
+        8219.433937299465,
+        2276.7802690158633,
+        4089.478956486662,
+        2364.3433497575916,
+        9697.573955651365,
+        4541.085968491845,
+        1355.2376884073335,
+        938.4405904040483,
+        9489.550990260805,
+        9328.688018114059,
+        177.76060693432072,
+        9379.091655075914,
+        5242.252664066193,
+        5654.302644362651,
+        6885.474005206818,
+        3226.9506621731703,
+        9942.14576076353,
+        2987.5858355289274,
+        3366.02363975022
+      ]
+    }
+  $type: |-
+    {
+      "description": "Solicitud de autenticación biométrica mediante vector facial",
+      "type": "object",
+      "properties": {
+        "challenge": {
+          "type": "string",
+          "minLength": 1,
+          "example": "f8a9c2e1-4b7d-4e9a-9c3b-1a2b3c4d5e6f",
+          "description": "Desafío vigente obtenido en /api/v1/auth/face/challenge"
+        },
+        "descriptor": {
+          "type": "array",
+          "description": "Vector descriptor facial de exactamente 128 valores numéricos",
+          "items": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "required": [
+        "challenge",
+        "descriptor"
+      ]
+    }
+settings: {}
+examples: ./.resources/Iniciar sesión con reconocimiento facial.resources/examples
+order: 1000

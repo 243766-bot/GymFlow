@@ -1,0 +1,75 @@
+$kind: http-request
+description: Modifica el plan, fechas o estado (ACTIVA/CANCELADA) de una membresía. Solo ADMIN.
+url: "{{baseUrl}}/api/v1/memberships/:id"
+method: PUT
+headers:
+  Content-Type: application/json
+  Accept: application/json
+pathVariables:
+  - key: id
+    value: "1"
+    disabled: false
+    description: ID de la membresía
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+body:
+  type: json
+  content: |-
+    {
+      "planId": 2,
+      "fechaInicio": "2026-11-20",
+      "fechaVencimiento": "2026-12-20",
+      "estado": "ACTIVA"
+    }
+  $type: |-
+    {
+      "description": "Campos editables de una membresía existente (todos opcionales)",
+      "type": "object",
+      "properties": {
+        "planId": {
+          "type": "integer",
+          "example": 2,
+          "description": "Nuevo ID de plan",
+          "format": "int64"
+        },
+        "fechaInicio": {
+          "type": "string",
+          "example": "2026-11-20",
+          "description": "Nueva fecha de inicio",
+          "format": "date"
+        },
+        "fechaVencimiento": {
+          "type": "string",
+          "example": "2026-12-20",
+          "description": "Nueva fecha de vencimiento",
+          "format": "date"
+        },
+        "estado": {
+          "type": "string",
+          "enum": [
+            "ACTIVA",
+            "CANCELADA"
+          ],
+          "example": "ACTIVA",
+          "description": "Estado administrativo de la membresía"
+        }
+      }
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Actualizar datos de una membresía.resources/examples
+order: 1000

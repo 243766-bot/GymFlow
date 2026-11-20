@@ -17,6 +17,10 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
 
     List<Pago> findByUsuarioIdOrderByFechaDesc(Long usuarioId);
 
+    boolean existsByUsuarioId(Long usuarioId);
+
+    boolean existsByPlanId(Long planId);
+
     // Pagos de un día: desde las 00:00 (incluida) hasta las 00:00 del día siguiente (excluida)
     List<Pago> findByFechaGreaterThanEqualAndFechaLessThanOrderByFechaAsc(
             LocalDateTime desde, LocalDateTime hasta);

@@ -1,0 +1,51 @@
+$kind: http-request
+description: Autentica las credenciales del usuario (ADMIN o USER) y genera un token Bearer JWT.
+url: "{{baseUrl}}/api/v1/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{adminEmail}}",
+      "password": "{{adminPassword}}"
+    }
+  $type: |-
+    {
+      "description": "Credenciales para inicio de sesión con correo y contraseña",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "minLength": 1,
+          "example": "admin@gymflow.com",
+          "description": "Correo electrónico registrado",
+          "format": "email"
+        },
+        "password": {
+          "type": "string",
+          "minLength": 1,
+          "example": "Admin12345",
+          "description": "Contraseña de la cuenta"
+        }
+      },
+      "required": [
+        "email",
+        "password"
+      ]
+    }
+scripts:
+  - type: afterResponse
+    code: "if (pm.response.code === 200) {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.environment.set(\"token\", data.token);\r
+
+      }"
+    language: text/javascript
+settings: {}
+examples: ./.resources/Iniciar sesión con correo y contraseña.resources/examples
+order: 1000

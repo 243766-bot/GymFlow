@@ -1,0 +1,31 @@
+$kind: http-request
+description: Obtiene el historial de ventas, con filtro opcional por fecha exacta (YYYY-MM-DD). Solo ADMIN.
+url: "{{baseUrl}}/api/v1/sales?fecha=2026-11-20"
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: fecha
+    value: 2026-11-20
+    disabled: false
+    description: Filtrar ventas por fecha (ISO-8601)
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      }
+body:
+  type: text
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Listar ventas realizadas.resources/examples
+order: 1000

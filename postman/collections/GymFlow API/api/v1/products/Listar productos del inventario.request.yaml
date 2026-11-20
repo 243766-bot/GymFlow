@@ -1,0 +1,16 @@
+$kind: http-request
+description: Obtiene todos los productos registrados (activos e inactivos). Solo ADMIN.
+url: "{{baseUrl}}/api/v1/products"
+method: GET
+headers:
+  Accept: application/json
+body:
+  type: text
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Listar productos del inventario.resources/examples
+order: 2000

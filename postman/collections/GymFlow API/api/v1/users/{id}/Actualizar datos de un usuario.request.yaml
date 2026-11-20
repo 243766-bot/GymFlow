@@ -1,0 +1,80 @@
+$kind: http-request
+description: Modifica nombre, correo, teléfono y opcionalmente la contraseña de un usuario. Solo ADMIN.
+url: "{{baseUrl}}/api/v1/users/:id"
+method: PUT
+headers:
+  Content-Type: application/json
+  Accept: application/json
+pathVariables:
+  - key: id
+    value: "2"
+    disabled: false
+    description: ID único del usuario
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+body:
+  type: json
+  content: |-
+    {
+      "email": "ana.lopez@gymflow.com",
+      "nombre": "Ana María López",
+      "telefono": "9679876543",
+      "password": "NuevaPass2026"
+    }
+  $type: |-
+    {
+      "description": "Datos para actualizar la información de un usuario",
+      "type": "object",
+      "properties": {
+        "nombre": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 100,
+          "pattern": "^[\\p{L}][\\p{L}\\s.'’-]*$",
+          "example": "Ana María López",
+          "description": "Nombre actualizado del usuario"
+        },
+        "email": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 150,
+          "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$",
+          "example": "ana.lopez@gymflow.com",
+          "description": "Correo electrónico actualizado"
+        },
+        "telefono": {
+          "type": "string",
+          "pattern": "^([0-9]{10})?$",
+          "example": "9679876543",
+          "description": "Teléfono celular de 10 dígitos"
+        },
+        "password": {
+          "type": "string",
+          "pattern": "^$|^(?=.*[A-Za-z])(?=.*\\d)[\\x20-\\x7E]{8,72}$",
+          "example": "NuevaPass2026",
+          "description": "Nueva contraseña (opcional; si se omite o va vacía no se modifica)"
+        }
+      },
+      "required": [
+        "email",
+        "nombre"
+      ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Actualizar datos de un usuario.resources/examples
+order: 2000

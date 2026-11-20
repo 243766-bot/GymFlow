@@ -13,4 +13,7 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
     // Ventas de un día: desde las 00:00 (incluida) hasta las 00:00 del día siguiente (excluida)
     List<Venta> findByFechaGreaterThanEqualAndFechaLessThanOrderByFechaAsc(
             LocalDateTime desde, LocalDateTime hasta);
+
+    // ¿El usuario aparece en alguna venta, como cliente o como quien la atendió?
+    boolean existsByClienteIdOrAtendidoPorId(Long clienteId, Long atendidoPorId);
 }

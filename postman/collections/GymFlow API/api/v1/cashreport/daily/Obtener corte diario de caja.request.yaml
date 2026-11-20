@@ -1,0 +1,31 @@
+$kind: http-request
+description: Consolida ingresos por ventas, membresías en efectivo, membresías en línea, salidas y balance neto del día (si no se envía fecha, usa hoy). Solo ADMIN.
+url: "{{baseUrl}}/api/v1/cashreport/daily?date=2026-11-20"
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: date
+    value: 2026-11-20
+    disabled: false
+    description: Fecha del corte en formato YYYY-MM-DD (opcional, por defecto hoy)
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      }
+body:
+  type: text
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Obtener corte diario de caja.resources/examples
+order: 1000

@@ -1,0 +1,73 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/v1/users/:id/face"
+  method: POST
+  headers:
+    - key: Content-Type
+      value: application/json
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: id
+      value: "2"
+      disabled: false
+      description: ID del usuario
+  body:
+    type: json
+    content: |-
+      {
+        "consentimiento": true,
+        "descriptor": [
+          2292.9319519211444,
+          5288.847958924582,
+          1902.2550797301474,
+          7053.339280995498,
+          3603.5660969719784,
+          1888.1022790564284,
+          2930.9353127975933,
+          8579.38162874372,
+          8414.923471138178,
+          1960.1582136056727,
+          2207.567160296776,
+          9153.405034871244,
+          5953.753645310477,
+          5362.370508627404,
+          6425.790573280494,
+          9955.87372400066,
+          330.9089547709432,
+          249.62275299770798,
+          5021.279126021178,
+          7020.3268437295565
+        ],
+        "foto": "data:image/jpeg;base64,/9j/4AAQSkZJRg..."
+      }
+response:
+  statusCode: 201
+  statusText: Created
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "mensaje": "Operación realizada correctamente"
+      }
+    $type: |-
+      {
+        "description": "Respuesta estándar de confirmación de operación",
+        "type": "object",
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "example": "Operación realizada correctamente",
+            "description": "Mensaje descriptivo del resultado"
+          }
+        },
+        "required": [
+          "mensaje"
+        ]
+      }
+order: 1000

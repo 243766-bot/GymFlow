@@ -1,0 +1,96 @@
+$kind: http-request
+description: Modifica nombre, categoría, tamaño, precio, stock o estado activo de un producto. Solo ADMIN.
+url: "{{baseUrl}}/api/v1/products/:id"
+method: PUT
+headers:
+  Content-Type: application/json
+  Accept: application/json
+pathVariables:
+  - key: id
+    value: "1"
+    disabled: false
+    description: ID del producto
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+body:
+  type: json
+  content: |-
+    {
+      "categoria": "Suplementos",
+      "nombre": "Proteína Whey Gold Standard",
+      "precio": 890,
+      "stock": 15,
+      "tamano": "907 g",
+      "activo": true
+    }
+  $type: |-
+    {
+      "description": "Datos para crear o actualizar un producto en inventario",
+      "type": "object",
+      "properties": {
+        "nombre": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 100,
+          "example": "Proteína Whey Gold Standard",
+          "description": "Nombre del producto"
+        },
+        "categoria": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 60,
+          "example": "Suplementos",
+          "description": "Categoría del producto"
+        },
+        "tamano": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 40,
+          "example": "907 g",
+          "description": "Presentación o tamaño (opcional)"
+        },
+        "precio": {
+          "type": "number",
+          "minimum": 0.01,
+          "example": 890,
+          "description": "Precio unitario de venta en MXN"
+        },
+        "stock": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000,
+          "example": 15,
+          "description": "Cantidad disponible en inventario",
+          "format": "int32"
+        },
+        "activo": {
+          "type": "boolean",
+          "example": true,
+          "description": "Indica si el producto está disponible para la venta"
+        }
+      },
+      "required": [
+        "categoria",
+        "nombre",
+        "precio",
+        "stock"
+      ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Actualizar un producto.resources/examples
+order: 2000

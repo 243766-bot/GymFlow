@@ -1,0 +1,224 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/v1/sales"
+  method: POST
+  headers:
+    - key: Content-Type
+      value: application/json
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  body:
+    type: json
+    content: |-
+      {
+        "items": [
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          },
+          {
+            "cantidad": 2,
+            "productoId": 1
+          }
+        ],
+        "clienteId": 2
+      }
+response:
+  statusCode: 201
+  statusText: Created
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "atendidoPor": "Administrador GymFlow",
+        "detalles": [
+          {
+            "cantidad": 2,
+            "precioUnitario": 15,
+            "producto": "Agua Natural 600 ml",
+            "productoId": 1,
+            "subtotal": 30
+          },
+          {
+            "cantidad": 2,
+            "precioUnitario": 15,
+            "producto": "Agua Natural 600 ml",
+            "productoId": 1,
+            "subtotal": 30
+          }
+        ],
+        "fecha": "2026-11-20T11:20:00",
+        "id": 7,
+        "total": 30,
+        "clienteId": 2,
+        "clienteNombre": "Carlos Mendoza"
+      }
+    $type: |-
+      {
+        "description": "Comprobante detallado de una venta",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 7,
+            "description": "ID único de la venta",
+            "format": "int64"
+          },
+          "fecha": {
+            "type": "string",
+            "example": "2026-11-20T11:20:00",
+            "description": "Fecha y hora de la venta",
+            "format": "date-time"
+          },
+          "total": {
+            "type": "number",
+            "example": 30,
+            "description": "Importe total de la venta en MXN"
+          },
+          "atendidoPor": {
+            "type": "string",
+            "example": "Administrador GymFlow",
+            "description": "Nombre del administrador que registró la venta"
+          },
+          "clienteId": {
+            "type": "integer",
+            "example": 2,
+            "description": "ID del cliente (null si fue venta general)",
+            "format": "int64"
+          },
+          "clienteNombre": {
+            "type": "string",
+            "example": "Carlos Mendoza",
+            "description": "Nombre del cliente (null si fue venta general)"
+          },
+          "detalles": {
+            "type": "array",
+            "description": "Lista de productos vendidos",
+            "items": {
+              "description": "Desglose por artículo de una venta realizada",
+              "type": "object",
+              "properties": {
+                "productoId": {
+                  "type": "integer",
+                  "example": 1,
+                  "description": "ID del producto vendido",
+                  "format": "int64"
+                },
+                "producto": {
+                  "type": "string",
+                  "example": "Agua Natural 600 ml",
+                  "description": "Nombre del producto"
+                },
+                "cantidad": {
+                  "type": "integer",
+                  "example": 2,
+                  "description": "Cantidad vendida",
+                  "format": "int32"
+                },
+                "precioUnitario": {
+                  "type": "number",
+                  "example": 15,
+                  "description": "Precio unitario aplicado al momento de la venta"
+                },
+                "subtotal": {
+                  "type": "number",
+                  "example": 30,
+                  "description": "Subtotal del renglón (cantidad * precioUnitario)"
+                }
+              },
+              "required": [
+                "cantidad",
+                "precioUnitario",
+                "producto",
+                "productoId",
+                "subtotal"
+              ]
+            }
+          }
+        },
+        "required": [
+          "atendidoPor",
+          "detalles",
+          "fecha",
+          "id",
+          "total"
+        ]
+      }
+order: 1000

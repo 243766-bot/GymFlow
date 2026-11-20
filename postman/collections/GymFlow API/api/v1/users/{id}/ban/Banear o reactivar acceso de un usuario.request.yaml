@@ -1,0 +1,53 @@
+$kind: http-request
+description: Suspende (baneado=true) o reactiva (baneado=false) la cuenta de un cliente. Solo ADMIN.
+url: "{{baseUrl}}/api/v1/users/:id/ban"
+method: PATCH
+headers:
+  Content-Type: application/json
+  Accept: application/json
+pathVariables:
+  - key: id
+    value: "2"
+    disabled: false
+    description: ID único del usuario
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+body:
+  type: json
+  content: |-
+    {
+      "baneado": true
+    }
+  $type: |-
+    {
+      "description": "Solicitud para suspender o reactivar el acceso de un usuario",
+      "type": "object",
+      "properties": {
+        "baneado": {
+          "type": "boolean",
+          "example": true,
+          "description": "true para banear/suspender acceso; false para reactivar"
+        }
+      },
+      "required": [
+        "baneado"
+      ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Banear o reactivar acceso de un usuario.resources/examples
+order: 1000

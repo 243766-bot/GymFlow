@@ -1,0 +1,55 @@
+$kind: http-request
+description: Registra un plan con nombre único, duración en días y precio. Solo ADMIN.
+url: "{{baseUrl}}/api/v1/plans"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "duracionDias": 30,
+      "nombre": "Mensualidad Estándar",
+      "precio": 450
+    }
+  $type: |-
+    {
+      "description": "Datos para crear o actualizar un plan de membresía",
+      "type": "object",
+      "properties": {
+        "nombre": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 80,
+          "example": "Mensualidad Estándar",
+          "description": "Nombre comercial del plan"
+        },
+        "duracionDias": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3650,
+          "example": 30,
+          "description": "Duración de vigencia en días (1 a 3650)",
+          "format": "int32"
+        },
+        "precio": {
+          "type": "number",
+          "minimum": 0.01,
+          "example": 450,
+          "description": "Precio del plan en MXN"
+        }
+      },
+      "required": [
+        "duracionDias",
+        "nombre",
+        "precio"
+      ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Crear nuevo plan de membresía.resources/examples
+order: 3000

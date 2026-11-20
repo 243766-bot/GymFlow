@@ -1,0 +1,146 @@
+$kind: http-request
+description: Procesa la venta de uno o varios productos, descuenta el stock automáticamente y calcula el total. Solo ADMIN.
+url: "{{baseUrl}}/api/v1/sales"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "items": [
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        },
+        {
+          "cantidad": 2,
+          "productoId": 1
+        }
+      ],
+      "clienteId": 2
+    }
+  $type: |-
+    {
+      "description": "Solicitud de registro de una venta en mostrador",
+      "type": "object",
+      "properties": {
+        "clienteId": {
+          "type": "integer",
+          "example": 2,
+          "description": "ID del cliente comprador (opcional para venta al público general)",
+          "format": "int64"
+        },
+        "items": {
+          "type": "array",
+          "description": "Lista de productos incluidos en la venta (1 a 50 artículos distintos)",
+          "items": {
+            "description": "Renglón de producto y cantidad dentro de una venta",
+            "type": "object",
+            "properties": {
+              "productoId": {
+                "type": "integer",
+                "example": 1,
+                "description": "ID del producto a vender",
+                "format": "int64"
+              },
+              "cantidad": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1000,
+                "example": 2,
+                "description": "Unidades vendidas (1 a 1000)",
+                "format": "int32"
+              }
+            },
+            "required": [
+              "cantidad",
+              "productoId"
+            ]
+          }
+        }
+      },
+      "required": [
+        "items"
+      ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Registrar una nueva venta.resources/examples
+order: 2000

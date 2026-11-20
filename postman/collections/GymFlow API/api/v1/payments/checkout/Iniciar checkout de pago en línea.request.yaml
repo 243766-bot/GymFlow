@@ -1,0 +1,36 @@
+$kind: http-request
+description: Crea una preferencia de pago en Mercado Pago para el plan seleccionado y devuelve la URL de pago.
+url: "{{baseUrl}}/api/v1/payments/checkout"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "planId": 1
+    }
+  $type: |-
+    {
+      "description": "Solicitud de pago en línea mediante Mercado Pago",
+      "type": "object",
+      "properties": {
+        "planId": {
+          "type": "integer",
+          "example": 1,
+          "description": "ID del plan a pagar en línea",
+          "format": "int64"
+        }
+      },
+      "required": [
+        "planId"
+      ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Iniciar checkout de pago en línea.resources/examples
+order: 1000

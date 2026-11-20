@@ -1,0 +1,97 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/v1/products"
+  method: GET
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      [
+        {
+          "activo": true,
+          "categoria": "Suplementos",
+          "id": 1,
+          "nombre": "Proteína Whey Gold Standard",
+          "precio": 890,
+          "stock": 15,
+          "tamano": "907 g"
+        },
+        {
+          "activo": true,
+          "categoria": "Suplementos",
+          "id": 1,
+          "nombre": "Proteína Whey Gold Standard",
+          "precio": 890,
+          "stock": 15,
+          "tamano": "907 g"
+        }
+      ]
+    $type: |-
+      {
+        "type": "array",
+        "items": {
+          "description": "Información de un producto del inventario",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 1,
+              "description": "ID único del producto",
+              "format": "int64"
+            },
+            "nombre": {
+              "type": "string",
+              "example": "Proteína Whey Gold Standard",
+              "description": "Nombre del producto"
+            },
+            "categoria": {
+              "type": "string",
+              "example": "Suplementos",
+              "description": "Categoría"
+            },
+            "tamano": {
+              "type": "string",
+              "example": "907 g",
+              "description": "Tamaño o presentación"
+            },
+            "precio": {
+              "type": "number",
+              "example": 890,
+              "description": "Precio unitario en MXN"
+            },
+            "stock": {
+              "type": "integer",
+              "example": 15,
+              "description": "Existencias actuales",
+              "format": "int32"
+            },
+            "activo": {
+              "type": "boolean",
+              "example": true,
+              "description": "Estado del producto en catálogo"
+            }
+          },
+          "required": [
+            "activo",
+            "categoria",
+            "id",
+            "nombre",
+            "precio",
+            "stock"
+          ]
+        }
+      }
+order: 1000

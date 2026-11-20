@@ -1,0 +1,57 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/v1/users/:id/face"
+  method: GET
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: id
+      value: "2"
+      disabled: false
+      description: ID del usuario
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "registrado": true,
+        "fechaRegistro": "2026-11-15T10:30:00",
+        "foto": "string"
+      }
+    $type: |-
+      {
+        "description": "Estado del registro biométrico facial de un usuario",
+        "type": "object",
+        "properties": {
+          "registrado": {
+            "type": "boolean",
+            "example": true,
+            "description": "Indica si el cliente tiene plantilla facial registrada"
+          },
+          "fechaRegistro": {
+            "type": "string",
+            "example": "2026-11-15T10:30:00",
+            "description": "Fecha y hora de registro biométrico (null si no está registrado)",
+            "format": "date-time"
+          },
+          "foto": {
+            "type": "string",
+            "description": "Miniatura JPEG en Base64 si fue almacenada"
+          }
+        },
+        "required": [
+          "registrado"
+        ]
+      }
+order: 1000
