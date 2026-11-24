@@ -1,0 +1,228 @@
+# =====================================================================
+#  GymFlow · Pipeline de Integración y Despliegue Continuo (CI/CD)
+#  API: Spring Boot 4 + PostgreSQL  ->  Render (Docker)
+#  Web: React + Vite                ->  Vercel
+#
+#  Ningún dato sensible está escrito en este archivo. Todo se lee de
+#  Settings > Secrets and variables > Actions:
+#    secrets.RENDER_DEPLOY_HOOK_URL  -> URL privada del Deploy Hook de Render
+#    secrets.RENDER_API_KEY          -> (opcional) para seguir el estado del deploy
+#    vars.API_BASE_URL               -> URL pública de la API (no es secreta)
+#    vars.FRONTEND_URL               -> URL pública del cliente web (no es secreta)
+# =====================================================================
+name: GymFlow CI/CD
+
+# ---------------------------------------------------------------------
+# 1) DISPARADORES: qué eventos ejecutan el pipeline
+# ---------------------------------------------------------------------
+on:
+  push:
+    branches: [master, ci-cd]          # rama principal y rama de trabajo del pipeline
+    paths-ignore: ["**.md", "postman/**"]
+  pull_request:
+    branches: [master]                 # todo PR hacia master debe pasar CI antes de fusionarse
+  workflow_dispatch:                   # permite lanzarlo a mano (botón o `gh workflow run`)
+
+# Mínimo privilegio: el token automático del workflow solo puede leer el código
+permissions:
+  contents: read
+
+# Si llegan dos push seguidos a la misma rama, se cancela la ejecución vieja
+concurrency:
+  group: gymflow-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # -------------------------------------------------------------------
+  # 2) JOB DE CI · API (Spring Boot)
+  # -------------------------------------------------------------------
+  api-ci:
+    name: CI · API Spring Boot
+    runs-on: ubuntu-latest             # runner hospedado por GitHub
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: gymflow-api
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Java 17 (con caché de dependencias Maven)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Dar permiso de ejecución a Maven Wrapper
+        run: sed -i 's/\r$//' mvnw && chmod +x mvnw
+
+      # Base de datos temporal SOLO para las pruebas: la contraseña se genera
+      # al azar en cada ejecución y se oculta de los logs con ::add-mask::
+      - name: Levantar PostgreSQL temporal para pruebas
+        run: |
+          DB_PASS="$(openssl rand -hex 24)"
+          JWT_KEY="$(openssl rand -base64 64 | tr -d '\n')"
+          echo "::add-mask::$DB_PASS"
+          echo "::add-mask::$JWT_KEY"
+          docker run -d --name pg-ci -p 5432:5432 \
+            -e POSTGRES_USER=gymflow_ci -e POSTGRES_PASSWORD="$DB_PASS" -e POSTGRES_DB=gymflow_ci \
+            postgres:16-alpine
+          for i in $(seq 1 30); do
+            docker exec pg-ci pg_isready -U gymflow_ci -d gymflow_ci && break
+            sleep 2
+          done
+          {
+            echo "CI_DB_URL=jdbc:postgresql://localhost:5432/gymflow_ci"
+            echo "CI_DB_USER=gymflow_ci"
+            echo "CI_DB_PASSWORD=$DB_PASS"
+            echo "CI_JWT_SECRET=$JWT_KEY"
+          } >> "$GITHUB_ENV"
+
+      - name: Análisis estático (Checkstyle, informativo)
+        continue-on-error: true
+        run: ./mvnw -B -q checkstyle:check -Dcheckstyle.config.location=google_checks.xml -Dcheckstyle.failOnViolation=false -Dcheckstyle.consoleOutput=false
+
+      - name: Compilar y ejecutar pruebas de integración de la API
+        env:
+          SPRING_PROFILES_ACTIVE: ci
+        run: ./mvnw -B verify
+
+      - name: Publicar reporte de pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-pruebas-api
+          path: gymflow-api/target/surefire-reports/
+          retention-days: 7
+
+      - name: Publicar el .jar compilado
+        uses: actions/upload-artifact@v4
+        with:
+          name: gymflow-api-jar
+          path: gymflow-api/target/*.jar
+          retention-days: 7
+
+      - name: Construir la imagen Docker (la misma que usa Render)
+        run: docker build -t gymflow-api:${{ github.sha }} .
+
+  # -------------------------------------------------------------------
+  # 3) JOB DE CI · Cliente web (React + Vite)
+  # -------------------------------------------------------------------
+  web-ci:
+    name: CI · Cliente React
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: gymflow-web
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js 22 (con caché de npm)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: gymflow-web/package-lock.json
+
+      - name: Instalar dependencias exactas
+        run: npm ci
+
+      - name: Análisis estático (oxlint)
+        run: npm run lint
+
+      - name: Compilar el cliente para producción
+        env:
+          VITE_API_URL: ${{ vars.API_BASE_URL || 'https://gymflow-xvua.onrender.com' }}/api/v1
+        run: npm run build
+
+      - name: Publicar la carpeta dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: gymflow-web-dist
+          path: gymflow-web/dist/
+          retention-days: 7
+
+  # -------------------------------------------------------------------
+  # 4) JOB DE CD · Despliegue a producción
+  #    Solo corre si los dos jobs de CI pasaron (needs) y si el cambio
+  #    llegó por push a master (nunca desde un PR ni desde otra rama).
+  # -------------------------------------------------------------------
+  deploy:
+    name: CD · Despliegue a producción
+    needs: [api-ci, web-ci]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: production
+      url: ${{ vars.FRONTEND_URL || 'https://gym-flow-self.vercel.app' }}
+    env:
+      API_BASE_URL: ${{ vars.API_BASE_URL || 'https://gymflow-xvua.onrender.com' }}
+      FRONTEND_URL: ${{ vars.FRONTEND_URL || 'https://gym-flow-self.vercel.app' }}
+
+    steps:
+      - name: Disparar el despliegue de la API en Render (Deploy Hook)
+        id: hook
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "::error::Falta el secret RENDER_DEPLOY_HOOK_URL"; exit 1
+          fi
+          RESPUESTA="$(curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL")"
+          DEPLOY_ID="$(echo "$RESPUESTA" | jq -r '.deploy.id // empty')"
+          SERVICE_ID="$(echo "$RENDER_DEPLOY_HOOK_URL" | grep -oE 'srv-[a-z0-9]+')"
+          echo "Deploy solicitado: ${DEPLOY_ID:-sin id}"
+          echo "deploy_id=$DEPLOY_ID"   >> "$GITHUB_OUTPUT"
+          echo "service_id=$SERVICE_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Esperar a que Render termine (estado "live")
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          DEPLOY_ID: ${{ steps.hook.outputs.deploy_id }}
+          SERVICE_ID: ${{ steps.hook.outputs.service_id }}
+        run: |
+          if [ -z "$RENDER_API_KEY" ] || [ -z "$DEPLOY_ID" ]; then
+            echo "Sin RENDER_API_KEY: se espera 4 minutos y se verifica con la prueba de humo."
+            sleep 240; exit 0
+          fi
+          for i in $(seq 1 60); do
+            ESTADO="$(curl -fsS -H "Authorization: Bearer $RENDER_API_KEY" \
+              "https://api.render.com/v1/services/$SERVICE_ID/deploys/$DEPLOY_ID" | jq -r '.status')"
+            echo "[$i] Estado del deploy: $ESTADO"
+            case "$ESTADO" in
+              live) exit 0 ;;
+              *failed|canceled|deactivated) echo "::error::El deploy terminó en $ESTADO"; exit 1 ;;
+            esac
+            sleep 15
+          done
+          echo "::error::Tiempo de espera agotado"; exit 1
+
+      - name: Prueba de humo · API en línea
+        run: |
+          for i in $(seq 1 20); do
+            CODIGO="$(curl -s -o /dev/null -w '%{http_code}' "$API_BASE_URL/v3/api-docs")"
+            echo "[$i] /v3/api-docs -> $CODIGO"
+            [ "$CODIGO" = "200" ] && break
+            sleep 15
+          done
+          [ "$CODIGO" = "200" ] || { echo "::error::La API no respondió"; exit 1; }
+          curl -fsS "$API_BASE_URL/api/v1/plans" -o /dev/null && echo "GET /api/v1/plans -> 200"
+
+      - name: Prueba de humo · Cliente web en Vercel
+        run: |
+          curl -fsS -o /dev/null -w "Frontend -> %{http_code}\n" "$FRONTEND_URL"
+
+      - name: Resumen del despliegue
+        run: |
+          {
+            echo "### GymFlow desplegado :rocket:"
+            echo "- Commit: \`${GITHUB_SHA::7}\`"
+            echo "- API: $API_BASE_URL/swagger-ui.html"
+            echo "- Web: $FRONTEND_URL"
+          } >> "$GITHUB_STEP_SUMMARY"
