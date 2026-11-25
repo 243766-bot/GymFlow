@@ -1261,6 +1261,150 @@
               }
             }
           }
+        },
+        {
+          "name": "1.22 Correo con dominio inventado, gill.com.mx.fr.de (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "const texto = String((pm.response.json() || {}).message || \"\").toLowerCase();",
+                  "pm.test(\"El mensaje menciona \\\"dominio\\\"\", () => pm.expect(texto).to.include(\"dominio\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Gustavo Prueba\",\n  \"email\": \"gustavoarr123@gill.com.mx.fr.de\",\n  \"password\": \"Prueba1234\",\n  \"telefono\": \"9611234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "1.23 Correo con terminación doble, gmail.com.mx.tv (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "const texto = String((pm.response.json() || {}).message || \"\").toLowerCase();",
+                  "pm.test(\"El mensaje menciona \\\"dominio\\\"\", () => pm.expect(texto).to.include(\"dominio\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Gustavo Prueba\",\n  \"email\": \"prueba@gmail.com.mx.tv\",\n  \"password\": \"Prueba1234\",\n  \"telefono\": \"9611234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "1.24 Correo que es solo una terminación, a@com.mx (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "const texto = String((pm.response.json() || {}).message || \"\").toLowerCase();",
+                  "pm.test(\"El mensaje menciona \\\"dominio\\\"\", () => pm.expect(texto).to.include(\"dominio\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Gustavo Prueba\",\n  \"email\": \"a@com.mx\",\n  \"password\": \"Prueba1234\",\n  \"telefono\": \"9611234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
         }
       ]
     },
@@ -6302,7 +6446,8 @@
                   "pm.test(\"Balance = ventas + membresías - salidas\", () => {",
                   "  const esperado = Number(r.totalVentas) + Number(r.ingresosMembresiasEfectivo) + Number(r.ingresosMembresiasEnLinea) - Number(r.totalSalidas);",
                   "  pm.expect(Math.abs(Number(r.balance) - esperado)).to.be.below(0.01);",
-                  "});"
+                  "});",
+                  "pm.test(\"Efectivo en caja = ventas + efectivo - salidas, y no es negativo\", () => { const r = pm.response.json(); const esperado = Number(r.totalVentas) + Number(r.ingresosMembresiasEfectivo) - Number(r.totalSalidas); pm.expect(Number(r.efectivoEnCaja)).to.be.closeTo(esperado, 0.001); pm.expect(Number(r.efectivoEnCaja)).to.be.at.least(0); });"
                 ]
               }
             }
@@ -6425,6 +6570,60 @@
                   "type": "string"
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "9.09 Salida mayor al efectivo en caja (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "const texto = String((pm.response.json() || {}).message || \"\").toLowerCase();",
+                  "pm.test(\"El mensaje menciona \\\"efectivo\\\"\", () => pm.expect(texto).to.include(\"efectivo\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cash-movements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cash-movements"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"concepto\": \"Compra de lamparas\",\n  \"monto\": 99999999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         }
