@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import com.gymflow.api.util.Validaciones;
 
 @Schema(description = "Datos para creación de usuarios o administradores por parte de un ADMIN")
 public record UsuarioCreateRequest(
@@ -18,7 +19,7 @@ public record UsuarioCreateRequest(
         @NotBlank(message = "El correo es obligatorio")
         @Email(message = "El correo no tiene un formato válido")
         @Size(max = 150, message = "El correo no puede pasar de 150 caracteres")
-        @Pattern(regexp = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$", message = "El correo debe tener un formato como nombre@dominio.com")
+        @Pattern(regexp = Validaciones.EMAIL, message = Validaciones.EMAIL_MENSAJE)
         String email,
 
         @Schema(description = "Contraseña (8 a 72 caracteres, letras y números)", example = "AnaGym2026", requiredMode = Schema.RequiredMode.REQUIRED)

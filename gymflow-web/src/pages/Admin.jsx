@@ -3,7 +3,7 @@ import { api } from "../api";
 import { useAuth } from "../AuthContext";
 import RostroCliente from "../components/RostroCliente";
 import MembresiaCliente from "../components/MembresiaCliente";
-import { formatearFecha } from "../formato";
+import { correoValido, formatearFecha } from "../formato";
 
 const FORMULARIO_VACIO = { nombre: "", email: "", password: "", telefono: "" };
 
@@ -68,6 +68,10 @@ export default function Admin() {
     e.preventDefault();
     setError("");
     setMensaje("");
+    if (!correoValido(nuevo.email)) {
+      setError("El correo debe tener un dominio válido, por ejemplo nombre@gmail.com o nombre@dominio.com.mx");
+      return;
+    }
     setCreando(true);
     try {
       await api("/users", {
@@ -195,6 +199,7 @@ export default function Admin() {
         <input
           type="text"
           placeholder="Nombre"
+          maxLength={100}
           value={nuevo.nombre}
           onChange={(e) => cambiarCampo("nombre", e.target.value)}
           required
@@ -202,22 +207,30 @@ export default function Admin() {
         <input
           type="email"
           placeholder="Correo"
+          maxLength={150}
           value={nuevo.email}
           onChange={(e) => cambiarCampo("email", e.target.value)}
           required
         />
         <input
           type="password"
-          placeholder="Contraseña (mínimo 8 caracteres)"
+          placeholder="Contraseña (8 a 72 caracteres, con letra y número)"
+          minLength={8}
+          maxLength={72}
           value={nuevo.password}
           onChange={(e) => cambiarCampo("password", e.target.value)}
           required
         />
         <input
           type="text"
-          placeholder="Teléfono (opcional)"
+          inputMode="numeric"
+          placeholder="Teléfono (10 dígitos, opcional)"
+          maxLength={10}
+          pattern="[0-9]{10}"
+          title="Escribe los 10 dígitos del teléfono, solo números"
           value={nuevo.telefono}
-          onChange={(e) => cambiarCampo("telefono", e.target.value)}
+          // Se quita cualquier cosa que no sea número y se corta a 10 dígitos
+          onChange={(e) => cambiarCampo("telefono", e.target.value.replace(/\D/g, "").slice(0, 10))}
         />
         <button type="submit" disabled={creando}>
           {creando ? "Creando..." : "Crear cliente"}

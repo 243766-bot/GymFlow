@@ -1,0 +1,1174 @@
+{
+  "info": {
+    "name": "GymFlow API",
+    "description": "Pruebas de autenticación, seguridad y login facial de GymFlow. Requiere el backend corriendo en localhost:8080.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const gen = () => Array.from({ length: 128 }, () => Math.round((Math.random() * 2 - 1) * 10000) / 10000);",
+          "if (!pm.collectionVariables.get(\"descriptor\")) pm.collectionVariables.set(\"descriptor\", JSON.stringify(gen()));",
+          "if (!pm.collectionVariables.get(\"nuevoEmail\")) pm.collectionVariables.set(\"nuevoEmail\", \"cliente\" + Date.now() + \"@test.com\");"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "nuevoEmail",
+      "value": ""
+    },
+    {
+      "key": "userToken",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "descriptor",
+      "value": ""
+    },
+    {
+      "key": "descriptor2",
+      "value": ""
+    },
+    {
+      "key": "challenge",
+      "value": ""
+    },
+    {
+      "key": "challenge2",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1 Autenticación",
+      "item": [
+        {
+          "name": "01 Registro exitoso (201)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const gen = () => Array.from({ length: 128 }, () => Math.round((Math.random() * 2 - 1) * 10000) / 10000);",
+                  "pm.collectionVariables.set(\"nuevoEmail\", \"cliente\" + Date.now() + \"@test.com\");",
+                  "pm.collectionVariables.set(\"descriptor\", JSON.stringify(gen()));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201 Created\", () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Devuelve token y tipo Bearer\", () => {",
+                  "  pm.expect(r.token).to.be.a(\"string\").and.not.empty;",
+                  "  pm.expect(r.tipo).to.eql(\"Bearer\");",
+                  "});",
+                  "pm.test(\"Todo registro público es ROLE_USER\", () => pm.expect(r.usuario.rol).to.eql(\"ROLE_USER\"));",
+                  "pm.test(\"La respuesta NO incluye la contraseña\", () => {",
+                  "  pm.expect(r.usuario).to.not.have.property(\"password\");",
+                  "  pm.expect(pm.response.text()).to.not.include(\"Prueba1234\");",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set(\"userToken\", r.token);",
+                  "  pm.collectionVariables.set(\"userId\", r.usuario.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Crea un cliente nuevo con un correo distinto en cada corrida. Todo registro público debe quedar como ROLE_USER.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cliente de Prueba\",\n  \"email\": \"{{nuevoEmail}}\",\n  \"password\": \"Prueba1234\",\n  \"telefono\": \"9611234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "02 Registro con correo repetido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"El mensaje indica que el correo ya está registrado\", () => {",
+                  "  pm.expect(pm.response.json().message).to.include(\"registrado\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Repite el correo del paso 01. Debe rechazarse.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cliente de Prueba\",\n  \"email\": \"{{nuevoEmail}}\",\n  \"password\": \"Prueba1234\",\n  \"telefono\": \"9611234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "03 Registro con datos inválidos (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "const msg = pm.response.json().message;",
+                  "pm.test(\"El mensaje menciona los campos inválidos\", () => {",
+                  "  pm.expect(msg).to.include(\"email\");",
+                  "  pm.expect(msg).to.include(\"password\");",
+                  "  pm.expect(msg).to.include(\"nombre\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Nombre vacío, correo sin formato y contraseña corta. Las validaciones de Jakarta deben responder 400.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"\",\n  \"email\": \"correo-malo\",\n  \"password\": \"123\",\n  \"telefono\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "04 Login correcto (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200 OK\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Devuelve un token JWT (3 partes)\", () => pm.expect(r.token.split(\".\")).to.have.lengthOf(3));",
+                  "pm.test(\"El usuario es el esperado\", () => pm.expect(r.usuario.email).to.eql(pm.collectionVariables.get(\"nuevoEmail\")));",
+                  "pm.test(\"No se expone la contraseña\", () => pm.expect(r.usuario).to.not.have.property(\"password\"));",
+                  "if (pm.response.code === 200) pm.collectionVariables.set(\"userToken\", r.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{nuevoEmail}}\",\n  \"password\": \"Prueba1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "05 Login con contraseña incorrecta (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 401 Unauthorized\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Mensaje genérico, sin revelar si el correo existe\", () => {",
+                  "  pm.expect(pm.response.json().message).to.eql(\"Correo o contraseña incorrectos\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{nuevoEmail}}\",\n  \"password\": \"ContraseñaEquivocada1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "06 Login con datos vacíos (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400 Bad Request\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"\",\n  \"password\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "07 Login como administrador (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200 OK\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"El rol es ROLE_ADMIN\", () => pm.expect(r.usuario.rol).to.eql(\"ROLE_ADMIN\"));",
+                  "if (pm.response.code === 200) pm.collectionVariables.set(\"adminToken\", r.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Usa el admin que se crea al arrancar con los valores app.admin.* de application-local.properties.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@gymflow.com\",\n  \"password\": \"CONTRASENA_DEL_ADMIN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 Seguridad",
+      "item": [
+        {
+          "name": "08 Perfil con token válido (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200 OK\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Devuelve el perfil del dueño del token\", () => pm.expect(r.email).to.eql(pm.collectionVariables.get(\"nuevoEmail\")));",
+                  "pm.test(\"No se expone la contraseña\", () => pm.expect(r).to.not.have.property(\"password\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "09 Perfil sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 401 Unauthorized\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "10 Perfil con token falso (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 401 Unauthorized\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer abc.def.ghi"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "11 Ruta inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 404 Not Found\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Usa el formato de error estándar\", () => {",
+                  "  const r = pm.response.json();",
+                  "  pm.expect(r).to.have.property(\"status\", 404);",
+                  "  pm.expect(r).to.have.property(\"message\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/esta-ruta-no-existe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "esta-ruta-no-existe"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 Rostro y login facial",
+      "item": [
+        {
+          "name": "12 Registrar rostro siendo cliente (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 403 Forbidden\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}/face",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}",
+                "face"
+              ]
+            },
+            "description": "Un ROLE_USER no puede registrar rostros: solo el administrador.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descriptor\": {{descriptor}},\n  \"consentimiento\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "13 Registrar rostro sin consentimiento (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"El mensaje pide el consentimiento\", () => pm.expect(pm.response.json().message).to.include(\"consentimiento\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}/face",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}",
+                "face"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descriptor\": {{descriptor}},\n  \"consentimiento\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "14 Registrar rostro con descriptor incompleto (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"El mensaje menciona los 128 valores\", () => pm.expect(pm.response.json().message).to.include(\"128\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}/face",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}",
+                "face"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descriptor\": [0.1, 0.2, 0.3],\n  \"consentimiento\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "15 Registrar rostro de usuario inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 404 Not Found\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Mensaje: usuario no encontrado\", () => pm.expect(pm.response.json().message).to.eql(\"Usuario no encontrado\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/999999999/face",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "999999999",
+                "face"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descriptor\": {{descriptor}},\n  \"consentimiento\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "16 Registrar rostro como administrador (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201 Created\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Confirma el registro\", () => pm.expect(pm.response.json().mensaje).to.include(\"registrado\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}/face",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}",
+                "face"
+              ]
+            },
+            "description": "Guarda el descriptor inventado en la variable {{descriptor}} para el cliente creado en el paso 01.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descriptor\": {{descriptor}},\n  \"consentimiento\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "17 Pedir desafío (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200 OK\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Devuelve un desafío y su duración\", () => {",
+                  "  pm.expect(r.challenge).to.be.a(\"string\").and.not.empty;",
+                  "  pm.expect(r.expiraEnSegundos).to.be.above(0);",
+                  "});",
+                  "if (pm.response.code === 200) pm.collectionVariables.set(\"challenge\", r.challenge);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/face/challenge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "face",
+                "challenge"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "18 Login facial correcto (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200 OK\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Identifica al cliente correcto\", () => {",
+                  "  pm.expect(r.usuario.id).to.eql(Number(pm.collectionVariables.get(\"userId\")));",
+                  "  pm.expect(r.usuario.rol).to.eql(\"ROLE_USER\");",
+                  "});",
+                  "pm.test(\"El JWT facial es de corta duración (15 min o menos)\", () => {",
+                  "  const payload = r.token.split(\".\")[1].replace(/-/g, \"+\").replace(/_/g, \"/\");",
+                  "  const datos = JSON.parse(atob(payload));",
+                  "  pm.expect(datos.exp - datos.iat).to.be.at.most(900);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/face/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "face",
+                "login"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challenge\": \"{{challenge}}\",\n  \"descriptor\": {{descriptor}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "19 Login facial reutilizando el desafío (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"El mensaje habla del desafío\", () => pm.expect(pm.response.json().message).to.include(\"desafío\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/face/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "face",
+                "login"
+              ]
+            },
+            "description": "El desafío del paso 17 ya se usó en el 18, así que debe fallar aunque el rostro sea el correcto.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challenge\": \"{{challenge}}\",\n  \"descriptor\": {{descriptor}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "20 Login facial con un rostro distinto (401)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const gen = () => Array.from({ length: 128 }, () => Math.round((Math.random() * 2 - 1) * 10000) / 10000);",
+                  "pm.collectionVariables.set(\"descriptor2\", JSON.stringify(gen()));",
+                  "pm.sendRequest({ url: pm.collectionVariables.get(\"baseUrl\") + \"/auth/face/challenge\", method: \"POST\" }, (err, res) => {",
+                  "  if (!err) pm.collectionVariables.set(\"challenge2\", res.json().challenge);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 401 Unauthorized\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"El mensaje dice que no se reconoció el rostro\", () => pm.expect(pm.response.json().message).to.include(\"No se reconoció\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/face/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "face",
+                "login"
+              ]
+            },
+            "description": "Pide un desafío nuevo por su cuenta y manda un rostro aleatorio. Cuenta como intento fallido para el límite por dispositivo.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challenge\": \"{{challenge2}}\",\n  \"descriptor\": {{descriptor2}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "21 Eliminar rostro como administrador (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Confirma la eliminación\", () => pm.expect(pm.response.json().mensaje).to.include(\"eliminado\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}/face",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}",
+                "face"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "22 Login facial tras eliminar el rostro (401)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({ url: pm.collectionVariables.get(\"baseUrl\") + \"/auth/face/challenge\", method: \"POST\" }, (err, res) => {",
+                  "  if (!err) pm.collectionVariables.set(\"challenge2\", res.json().challenge);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 401 Unauthorized\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/face/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "face",
+                "login"
+              ]
+            },
+            "description": "Con el mismo descriptor de antes, pero ya sin plantilla guardada, ya no debe reconocerlo.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challenge\": \"{{challenge2}}\",\n  \"descriptor\": {{descriptor}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -35,5 +35,8 @@ public record CorteDiarioResponse(
         List<PagoResponse> pagos,
 
         @Schema(description = "Listado de salidas de efectivo registradas en el día", requiredMode = Schema.RequiredMode.REQUIRED)
-        List<MovimientoCajaResponse> salidas
+        List<MovimientoCajaResponse> salidas,
+
+        @Schema(description = "Efectivo disponible en caja (ventas + membres\u00edas en efectivo - salidas); no incluye pagos en l\u00ednea", example = "1340.00", requiredMode = Schema.RequiredMode.REQUIRED)
+        BigDecimal efectivoEnCaja
 ) {}

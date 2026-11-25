@@ -40,3 +40,35 @@ export function etiquetaMetodo(metodo) {
   if (metodo === "MERCADO_PAGO") return "Mercado Pago";
   return metodo;
 }
+
+// Mismas terminaciones que acepta el servidor (ver Validaciones.java)
+const TERMINACIONES =
+  "com\\.mx|org\\.mx|net\\.mx|edu\\.mx|gob\\.mx|com\\.ar|com\\.co|com\\.br|com\\.pe|com\\.es" +
+  "|co\\.uk|org\\.uk|com\\.au|com|net|org|edu|gob|gov|info|biz|io|co|mx|us|es|ar|cl|pe|br|ca|uk|de|fr|it|pt";
+const REGEX_CORREO = new RegExp(
+  "^(?=[^@]{1,64}@)[a-z0-9]+([._%+-][a-z0-9]+)*@(?!(?:com|net|org|edu|gob|gov|co)\\.)[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.(" + TERMINACIONES + ")$",
+  "i"
+);
+
+// true si el correo tiene un dominio con terminacion real (gmail.com, upchiapas.edu.mx...)
+export function correoValido(correo) {
+  return REGEX_CORREO.test(correo.trim());
+}
+
+// Deja solo digitos y un punto decimal (maximo "decimales" decimales y 8 enteros). "1e5" -> "15"
+export function soloMonto(valor, decimales = 2) {
+  let limpio = valor.replace(/[^0-9.]/g, "");
+  const [enteros, ...resto] = limpio.split(".");
+  limpio = enteros.slice(0, 8);
+  if (resto.length > 0 && decimales > 0) {
+    limpio += "." + resto.join("").slice(0, decimales);
+  }
+  return limpio;
+}
+
+// Para campos type="number": evita escribir e, E, + y - (y el punto si el campo es entero)
+export function bloquearNoNumericas(e, entero = false) {
+  const prohibidas = ["e", "E", "+", "-"];
+  if (entero) prohibidas.push(".", ",");
+  if (prohibidas.includes(e.key)) e.preventDefault();
+}

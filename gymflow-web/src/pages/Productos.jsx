@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../AuthContext";
-import { formatearMoneda } from "../formato";
+import { bloquearNoNumericas, formatearMoneda } from "../formato";
 
 const STOCK_BAJO = 5;
 const FORM_VACIO = { nombre: "", categoria: "", tamano: "", precio: "", stock: "", activo: true };
@@ -158,6 +158,7 @@ export default function Productos() {
             placeholder="Precio"
             min="0.01"
             step="0.01"
+            onKeyDown={(e) => bloquearNoNumericas(e)}
             value={form.precio}
             onChange={(e) => cambiarCampo("precio", e.target.value)}
             required
@@ -167,6 +168,7 @@ export default function Productos() {
             placeholder="Stock"
             min="0"
             step="1"
+            onKeyDown={(e) => bloquearNoNumericas(e, true)}
             value={form.stock}
             onChange={(e) => cambiarCampo("stock", e.target.value)}
             required
