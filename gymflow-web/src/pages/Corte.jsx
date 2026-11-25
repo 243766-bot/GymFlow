@@ -7,6 +7,7 @@ import {
   formatearHora,
   formatearMoneda,
   hoyISO,
+  soloMonto,
 } from "../formato";
 
 export default function Corte() {
@@ -47,12 +48,21 @@ export default function Corte() {
     e.preventDefault();
     setError("");
     setMensaje("");
+    const cantidad = Number(monto);
+    if (!(cantidad > 0)) {
+      setError("El monto debe ser mayor a 0");
+      return;
+    }
+    if (corte && cantidad > Number(corte.efectivoEnCaja)) {
+      setError(`No hay suficiente efectivo en caja. Disponible hoy: ${formatearMoneda(Math.max(0, corte.efectivoEnCaja))}`);
+      return;
+    }
     setGuardando(true);
     try {
       await api("/cash-movements", {
         method: "POST",
         token,
-        body: { concepto, monto: Number(monto) },
+        body: { concepto, monto: cantidad },
       });
       setConcepto("");
       setMonto("");
@@ -110,6 +120,13 @@ export default function Corte() {
                 {formatearMoneda(corte.balance)}
               </p>
               <span className="pequeno">Ventas + membresías − salidas</span>
+            </div>
+            <div className="tarjeta">
+              <span className="pequeno">Efectivo en caja</span>
+              <p className={`valor ${Number(corte.efectivoEnCaja) >= 0 ? "ok" : "error"}`}>
+                {formatearMoneda(corte.efectivoEnCaja)}
+              </p>
+              <span className="pequeno">Sin contar pagos en línea</span>
             </div>
           </div>
 
@@ -216,12 +233,12 @@ export default function Corte() {
               style={{ minWidth: 260 }}
             />
             <input
-              type="number"
+              type="text"
+              inputMode="decimal"
               placeholder="Monto"
-              min="0.01"
-              step="0.01"
+              title="Solo números, con hasta 2 decimales"
               value={monto}
-              onChange={(e) => setMonto(e.target.value)}
+              onChange={(e) => setMonto(soloMonto(e.target.value))}
               required
             />
             <button type="submit" disabled={guardando}>

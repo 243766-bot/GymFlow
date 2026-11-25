@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import com.gymflow.api.util.Validaciones;
 
 @Schema(description = "Datos para actualizar la información de un usuario")
 public record UsuarioUpdateRequest(
@@ -18,7 +19,7 @@ public record UsuarioUpdateRequest(
         @NotBlank(message = "El correo es obligatorio")
         @Email(message = "El correo no tiene un formato válido")
         @Size(max = 150, message = "El correo no puede pasar de 150 caracteres")
-        @Pattern(regexp = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$", message = "El correo debe tener un formato como nombre@dominio.com")
+        @Pattern(regexp = Validaciones.EMAIL, message = Validaciones.EMAIL_MENSAJE)
         String email,
 
         @Schema(description = "Teléfono celular de 10 dígitos", example = "9679876543", requiredMode = Schema.RequiredMode.NOT_REQUIRED)

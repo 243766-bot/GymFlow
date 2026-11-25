@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../AuthContext";
-import { formatearMoneda } from "../formato";
+import { bloquearNoNumericas, formatearMoneda } from "../formato";
 
 const FORM_VACIO = { nombre: "", duracionDias: "", precio: "" };
 
@@ -117,6 +117,7 @@ export default function Planes() {
             min="1"
             max="3650"
             step="1"
+            onKeyDown={(e) => bloquearNoNumericas(e, true)}
             value={form.duracionDias}
             onChange={(e) => cambiarCampo("duracionDias", e.target.value)}
             required
@@ -126,6 +127,7 @@ export default function Planes() {
             placeholder="Precio"
             min="0.01"
             step="0.01"
+            onKeyDown={(e) => bloquearNoNumericas(e)}
             value={form.precio}
             onChange={(e) => cambiarCampo("precio", e.target.value)}
             required

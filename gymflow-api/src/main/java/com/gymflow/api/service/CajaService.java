@@ -11,6 +11,7 @@ import com.gymflow.api.entity.MovimientoCaja;
 import com.gymflow.api.entity.Pago;
 import com.gymflow.api.entity.TipoMovimiento;
 import com.gymflow.api.entity.Venta;
+import com.gymflow.api.exception.BadRequestException;
 import com.gymflow.api.repository.MovimientoCajaRepository;
 import com.gymflow.api.repository.PagoRepository;
 import com.gymflow.api.repository.VentaRepository;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,6 +42,13 @@ public class CajaService {
 
     @Transactional
     public MovimientoCajaResponse registrarSalida(MovimientoCajaRequest request) {
+        // Una salida solo puede salir del efectivo que hay en caja hoy
+        BigDecimal disponible = corteDiario(Fechas.hoy()).efectivoEnCaja();
+        if (request.monto().compareTo(disponible) > 0) {
+            throw new BadRequestException("No hay suficiente efectivo en caja. Disponible hoy: $"
+                    + disponible.max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP).toPlainString());
+        }
+
         MovimientoCaja movimiento = new MovimientoCaja();
         movimiento.setTipo(TipoMovimiento.SALIDA);
         movimiento.setConcepto(request.concepto().trim());
@@ -81,6 +90,11 @@ public class CajaService {
                 .add(ingresosEnLinea)
                 .subtract(totalSalidas);
 
+        // Solo el efectivo esta fisicamente en la caja: los pagos en linea no cuentan
+        BigDecimal efectivoEnCaja = totalVentas
+                .add(ingresosEfectivo)
+                .subtract(totalSalidas);
+
         return new CorteDiarioResponse(
                 dia,
                 ventas.size(),
@@ -91,7 +105,8 @@ public class CajaService {
                 balance,
                 ventas.stream().map(VentaResumenResponse::from).toList(),
                 pagos.stream().map(PagoResponse::from).toList(),
-                salidas.stream().map(MovimientoCajaResponse::from).toList()
+                salidas.stream().map(MovimientoCajaResponse::from).toList(),
+                efectivoEnCaja
         );
     }
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../AuthContext";
-import { formatearHora, formatearMoneda, hoyISO } from "../formato";
+import { bloquearNoNumericas, formatearHora, formatearMoneda, hoyISO } from "../formato";
 
 export default function Ventas() {
   const { token } = useAuth();
@@ -203,6 +203,7 @@ export default function Ventas() {
                           type="number"
                           min="1"
                           max={i.stock}
+                          onKeyDown={(e) => bloquearNoNumericas(e, true)}
                           value={i.cantidad}
                           onChange={(e) => cambiarCantidad(i.id, e.target.value)}
                           style={{ width: 70 }}
