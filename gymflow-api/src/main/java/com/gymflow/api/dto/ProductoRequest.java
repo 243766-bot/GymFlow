@@ -9,15 +9,18 @@ public record ProductoRequest(
         @Schema(description = "Nombre del producto", example = "Proteína Whey Gold Standard", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "El nombre es obligatorio")
         @Size(max = 100, message = "El nombre no puede pasar de 100 caracteres")
+        @Pattern(regexp = "^[^<>]*$", message = "El nombre no puede contener los caracteres < o >")
         String nombre,
 
         @Schema(description = "Categoría del producto", example = "Suplementos", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "La categoría es obligatoria")
         @Size(max = 60, message = "La categoría no puede pasar de 60 caracteres")
+        @Pattern(regexp = "^[^<>]*$", message = "La categoría no puede contener los caracteres < o >")
         String categoria,
 
         @Schema(description = "Presentación o tamaño (opcional)", example = "907 g", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         @Size(max = 40, message = "El tamaño no puede pasar de 40 caracteres")
+        @Pattern(regexp = "^[^<>]*$", message = "El tamaño no puede contener los caracteres < o >")
         String tamano,
 
         @Schema(description = "Precio unitario de venta en MXN", example = "890.00", requiredMode = Schema.RequiredMode.REQUIRED)
