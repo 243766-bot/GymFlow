@@ -1,0 +1,1554 @@
+{
+  "info": {
+    "name": "GymFlow API - U4 Plan de Pruebas QA",
+    "description": "Matriz de pruebas de la actividad U4 (CP-01 a CP-26). Ejecutar en orden con el Collection Runner. Requiere el entorno con baseUrl, adminEmail y adminPassword.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0 Preparación",
+      "item": [
+        {
+          "name": "PREP - Registrar cliente de prueba (rol USER)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Crea un cliente para las pruebas de control de acceso (403) y de duplicados.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cliente QA\",\n  \"email\": \"{{clienteEmail}}\",\n  \"password\": \"ClienteQa2026\",\n  \"telefono\": \"9611234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"userToken\", pm.response.json().token);"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"clienteEmail\", \"qa.cliente\" + Date.now() + \"@gmail.com\");"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1 Funcionales (camino feliz)",
+      "item": [
+        {
+          "name": "CP-01 - Login de administrador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Content-Type es application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.include(\"application/json\"));",
+                  "pm.test(\"Tiempo de respuesta < 2000 ms\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"Devuelve token JWT tipo Bearer\", () => { pm.expect(b.token).to.be.a(\"string\").and.not.empty; pm.expect(b.tipo).to.eql(\"Bearer\"); });",
+                  "pm.test(\"No devuelve la contraseña del usuario\", () => pm.expect(JSON.stringify(b)).to.not.match(/password|contrasena/i));",
+                  "pm.collectionVariables.set(\"adminToken\", b.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-02 - Crear producto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Proteína QA Whey\",\n  \"categoria\": \"Suplementos\",\n  \"tamano\": \"907 g\",\n  \"precio\": 890,\n  \"stock\": 5,\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Content-Type es application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.include(\"application/json\"));",
+                  "pm.test(\"Tiempo de respuesta < 2000 ms\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"Devuelve el producto con id y los datos enviados\", () => {",
+                  "  pm.expect(b.id).to.be.a(\"number\");",
+                  "  pm.expect(b.nombre).to.eql(\"Proteína QA Whey\");",
+                  "  pm.expect(b.stock).to.eql(5);",
+                  "});",
+                  "pm.collectionVariables.set(\"productoId\", b.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-03 - Consultar producto por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{productoId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Content-Type es application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.include(\"application/json\"));",
+                  "pm.test(\"Tiempo de respuesta < 2000 ms\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "pm.test(\"Devuelve el producto solicitado\", () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get(\"productoId\"))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-04 - Actualizar producto (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{productoId}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Proteína QA Whey\",\n  \"categoria\": \"Suplementos\",\n  \"tamano\": \"907 g\",\n  \"precio\": 950.5,\n  \"stock\": 5,\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Content-Type es application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.include(\"application/json\"));",
+                  "pm.test(\"Tiempo de respuesta < 2000 ms\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "pm.test(\"El precio quedó actualizado\", () => pm.expect(Number(pm.response.json().precio)).to.eql(950.5));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-05 - Registrar venta y descontar stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sales"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [ { \"productoId\": {{productoId}}, \"cantidad\": 2 } ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Content-Type es application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.include(\"application/json\"));",
+                  "pm.test(\"Tiempo de respuesta < 2000 ms\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "pm.test(\"La venta tiene id y total (2 x 950.50)\", () => { const b = pm.response.json(); pm.expect(b.id).to.be.a(\"number\"); pm.expect(Number(b.total)).to.eql(1901); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "VER - Stock tras la venta de CP-05 (debe ser 3)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{productoId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"El stock bajó de 5 a 3\", () => pm.expect(pm.response.json().stock).to.eql(3));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PREP - Crear producto temporal sin ventas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Producto temporal QA\",\n  \"categoria\": \"Pruebas\",\n  \"precio\": 10,\n  \"stock\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"productoTmpId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-06 - Eliminar producto sin ventas (DELETE)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productoTmpId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{productoTmpId}}"
+              ]
+            },
+            "description": "Nota: la API responde 200 con mensaje en lugar de 204 No Content (ver hallazgos)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Content-Type es application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.include(\"application/json\"));",
+                  "pm.test(\"Mensaje de eliminación\", () => pm.expect(pm.response.json().mensaje).to.include(\"eliminado\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "VER - El producto eliminado ya no existe (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productoTmpId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{productoTmpId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 Validación de tipos y esquemas",
+      "item": [
+        {
+          "name": "CP-07 - Texto en campo numérico (precio)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Producto QA\",\n  \"categoria\": \"Suplementos\",\n  \"precio\": \"abc\",\n  \"stock\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Content-Type es application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.include(\"application/json\"));",
+                  "pm.test(\"Cuerpo de error estandarizado (status, error, message)\", () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b).to.have.all.keys(\"timestamp\", \"status\", \"error\", \"message\");",
+                  "});",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-08 - Correo mal formado en registro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Correo Malo\",\n  \"email\": \"correo-sin-arroba.com\",\n  \"password\": \"ClienteQa2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Cuerpo de error estandarizado (status, error, message)\", () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b).to.have.all.keys(\"timestamp\", \"status\", \"error\", \"message\");",
+                  "});",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});",
+                  "pm.test(\"El mensaje señala el campo email\", () => pm.expect(pm.response.json().message).to.include(\"email\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-09 - Campos obligatorios vacíos / null y stock negativo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"\",\n  \"categoria\": null,\n  \"precio\": null,\n  \"stock\": -4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Cuerpo de error estandarizado (status, error, message)\", () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b).to.have.all.keys(\"timestamp\", \"status\", \"error\", \"message\");",
+                  "});",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});",
+                  "pm.test(\"Reporta cada campo inválido\", () => {",
+                  "  const m = pm.response.json().message;",
+                  "  [\"nombre\", \"categoria\", \"precio\", \"stock\"].forEach(c => pm.expect(m).to.include(c));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-10 - JSON mal estructurado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Producto roto\",\n  \"precio\": 100,\n  \"stock\": 2\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Cuerpo de error estandarizado (status, error, message)\", () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b).to.have.all.keys(\"timestamp\", \"status\", \"error\", \"message\");",
+                  "});",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});",
+                  "pm.test(\"Mensaje controlado de JSON inválido\", () => pm.expect(pm.response.json().message).to.include(\"JSON\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-11 - ID con formato inválido en la URL",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "abc"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Cuerpo de error estandarizado (status, error, message)\", () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b).to.have.all.keys(\"timestamp\", \"status\", \"error\", \"message\");",
+                  "});",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 Lógica de negocio",
+      "item": [
+        {
+          "name": "CP-12 - Venta con stock insuficiente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sales"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [ { \"productoId\": {{productoId}}, \"cantidad\": 50 } ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Cuerpo de error estandarizado (status, error, message)\", () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b).to.have.all.keys(\"timestamp\", \"status\", \"error\", \"message\");",
+                  "});",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});",
+                  "pm.test(\"Mensaje de stock insuficiente\", () => pm.expect(pm.response.json().message).to.include(\"Stock insuficiente\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "VER - El stock no cambió tras CP-12 (sigue en 3)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{productoId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"El stock sigue en 3\", () => pm.expect(pm.response.json().stock).to.eql(3));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-13 - Registro con correo duplicado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cliente Duplicado\",\n  \"email\": \"{{clienteEmail}}\",\n  \"password\": \"ClienteQa2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Cuerpo de error estandarizado (status, error, message)\", () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b).to.have.all.keys(\"timestamp\", \"status\", \"error\", \"message\");",
+                  "});",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});",
+                  "pm.test(\"Mensaje de correo ya registrado\", () => pm.expect(pm.response.json().message).to.include(\"ya está registrado\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-14 - Consultar producto inexistente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "999999"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Cuerpo de error estandarizado (status, error, message)\", () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b).to.have.all.keys(\"timestamp\", \"status\", \"error\", \"message\");",
+                  "});",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 Seguridad",
+      "item": [
+        {
+          "name": "CP-15 - Endpoint protegido sin token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-16 - Token JWT alterado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlterado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Cambia la firma del token válido para simular un token manipulado",
+                  "const t = pm.collectionVariables.get(\"adminToken\");",
+                  "pm.collectionVariables.set(\"tokenAlterado\", t.slice(0, -6) + (t.slice(-6) === \"AAAAAA\" ? \"BBBBBB\" : \"AAAAAA\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-17 - Rol sin permisos (cliente → inventario)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Cuerpo de error estandarizado (status, error, message)\", () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b).to.have.all.keys(\"timestamp\", \"status\", \"error\", \"message\");",
+                  "});",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-18 - Inyección SQL en login (' OR 1=1 --)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"' OR 1=1 --\",\n  \"password\": \"' OR '1'='1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Rechaza la petición (400 o 401), no inicia sesión\", () => pm.expect(pm.response.code).to.be.oneOf([400, 401]));",
+                  "pm.test(\"No devuelve token\", () => pm.expect(pm.response.text()).to.not.include(\"token\"));",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-19 - Inyección SQL en parámetro de URL",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/1%20OR%201=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "1%20OR%201=1"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Cuerpo de error estandarizado (status, error, message)\", () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b).to.have.all.keys(\"timestamp\", \"status\", \"error\", \"message\");",
+                  "});",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-20 - Etiqueta <script> en nombre de cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"<script>alert(1)</script>\",\n  \"email\": \"xss.qa@gmail.com\",\n  \"password\": \"ClienteQa2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Cuerpo de error estandarizado (status, error, message)\", () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b).to.have.all.keys(\"timestamp\", \"status\", \"error\", \"message\");",
+                  "});",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});",
+                  "pm.test(\"Rechazada por la validación del nombre\", () => pm.expect(pm.response.json().message).to.include(\"nombre\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-21 - Etiqueta <script> en nombre de producto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            },
+            "description": "Hallazgo real: ver la matriz de pruebas.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"<script>alert('xss')</script>\",\n  \"categoria\": \"Pruebas\",\n  \"precio\": 1,\n  \"stock\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"La API rechaza (400) o neutraliza el <script>\", () => {",
+                  "  if (pm.response.code === 400) return;",
+                  "  pm.expect(pm.response.text()).to.not.include(\"<script>\");",
+                  "});",
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"productoXssId\", pm.response.json().id);",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5 Buenas prácticas REST",
+      "item": [
+        {
+          "name": "CP-22 - Verbo HTTP no soportado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 405\", () => pm.response.to.have.status(405));",
+                  "pm.test(\"Cuerpo de error estandarizado (status, error, message)\", () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b).to.have.all.keys(\"timestamp\", \"status\", \"error\", \"message\");",
+                  "});",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-23 - Content-Type incorrecto (text/plain)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "nombre=Producto&precio=10",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 415\", () => pm.response.to.have.status(415));",
+                  "pm.test(\"Cuerpo de error estandarizado (status, error, message)\", () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b).to.have.all.keys(\"timestamp\", \"status\", \"error\", \"message\");",
+                  "});",
+                  "pm.test(\"No expone trazas, SQL ni credenciales\", () => {",
+                  "  const t = pm.response.text();",
+                  "  [\"Exception\", \"at com.\", \"at org.\", \"org.hibernate\", \"SQL\", \"jdbc\", \"password\", \"select \", \"stackTrace\", \"trace\"].forEach(p =>",
+                  "    pm.expect(t.toLowerCase()).to.not.include(p.toLowerCase()));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-24 - CORS: origen no permitido",
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "https://sitio-malicioso.com"
+              },
+              {
+                "key": "Access-Control-Request-Method",
+                "value": "GET"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "plans"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"No envía Access-Control-Allow-Origin\", () => pm.expect(pm.response.headers.has(\"Access-Control-Allow-Origin\")).to.be.false);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-25 - CORS: origen permitido (cliente web)",
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{origenPermitido}}"
+              },
+              {
+                "key": "Access-Control-Request-Method",
+                "value": "GET"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "plans"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Access-Control-Allow-Origin coincide con el cliente web\", () =>",
+                  "  pm.expect(pm.response.headers.get(\"Access-Control-Allow-Origin\")).to.eql(pm.variables.get(\"origenPermitido\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CP-26 - Endpoint público: tiempo y encabezados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "plans"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Content-Type es application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.include(\"application/json\"));",
+                  "pm.test(\"Tiempo de respuesta < 2000 ms\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "pm.test(\"Devuelve un arreglo JSON\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "userToken",
+      "value": ""
+    },
+    {
+      "key": "clienteEmail",
+      "value": ""
+    },
+    {
+      "key": "productoId",
+      "value": ""
+    },
+    {
+      "key": "productoTmpId",
+      "value": ""
+    },
+    {
+      "key": "tokenAlterado",
+      "value": ""
+    },
+    {
+      "key": "productoXssId",
+      "value": ""
+    },
+    {
+      "key": "origenPermitido",
+      "value": "http://localhost:5173"
+    }
+  ]
+}
