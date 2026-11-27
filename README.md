@@ -2,7 +2,7 @@
 
 Sistema web de gestión para gimnasios: clientes, planes, membresías, inventario, ventas, caja con corte diario y pagos en línea. Los clientes pueden iniciar sesión con **correo y contraseña** o con **reconocimiento facial** desde la cámara web.
 
-Proyecto final individual de la materia *Aplicaciones Web Orientadas a Servicios* (UP Chiapas, 5.º semestre, Grupo 5A).
+Proyecto final individual de la materia *Aplicaciones Web Orientadas a Servicios* (UP Chiapas, Grupo 5A).
 **Autor:** Víctor Alfonso Álvarez Castillo (matrícula 243766).
 
 ## Demo en línea
