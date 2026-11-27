@@ -17,10 +17,10 @@ name: GymFlow CI/CD
 # ---------------------------------------------------------------------
 on:
   push:
-    branches: [master, ci-cd]          # rama principal y rama de trabajo del pipeline
+    branches: [main, ci-cd]          # rama principal y rama de trabajo del pipeline
     paths-ignore: ["**.md", "postman/**"]
   pull_request:
-    branches: [master]                 # todo PR hacia master debe pasar CI antes de fusionarse
+    branches: [main]                   # todo PR hacia main debe pasar CI antes de fusionarse
   workflow_dispatch:                   # permite lanzarlo a mano (botón o `gh workflow run`)
 
 # Mínimo privilegio: el token automático del workflow solo puede leer el código
@@ -150,12 +150,12 @@ jobs:
   # -------------------------------------------------------------------
   # 4) JOB DE CD · Despliegue a producción
   #    Solo corre si los dos jobs de CI pasaron (needs) y si el cambio
-  #    llegó por push a master (nunca desde un PR ni desde otra rama).
+  #    llegó por push a main (nunca desde un PR ni desde otra rama).
   # -------------------------------------------------------------------
   deploy:
     name: CD · Despliegue a producción
     needs: [api-ci, web-ci]
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     environment:
